@@ -40,11 +40,8 @@ import dayjs from 'dayjs';
 if (endDate.value && endTime.value) {
   endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format('YYYY-MM-DDTHH:mm:ss')
   alert('Fecha y Hora combinadas:', endDateTime.value);
-} else {
-  alert("seleciona una fecha y una hora")
-  return
-  
-}
+} else { alert("seleciona una fecha y una hora")
+  return}
 
     const project = {
       name: name.value,

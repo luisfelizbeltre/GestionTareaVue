@@ -77,4 +77,5 @@ nav button:hover {
   background-color: rgba(255, 255, 255, 0.2); /* Color de fondo al pasar el mouse */
   color: #ffffff; /* Cambiar el color del texto al pasar el mouse */
 }
+
 </style>

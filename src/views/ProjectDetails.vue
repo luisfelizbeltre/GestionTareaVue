@@ -1,62 +1,75 @@
 <template>
-  <div class="project-details">
-    <div v-if="isLoading" class="loading">Cargando detalles del proyecto...</div>
-    <div v-else-if="project">
-      <div class="project">
-        <h1>Nombre: {{ project.name }}</h1>
-        <p>Descripcion: {{ project.description }}</p>
-        <p>Responsable: {{ project.responsibleUsername }}</p>
-      </div>
-
-      <!-- Miembros del proyecto -->
-      <div class="members">
-        <h2>Miembros ({{ project.members.length }})</h2>
-        <ul>
-          <li v-for="member in project.members" :key="member.id">{{ member.username }}</li>
-        </ul>
-        <button @click="toggleMemberForm">➕ Añadir Miembro</button>
-
-        <!-- Formulario para añadir miembros -->
-        <div v-if="isMemberFormVisible" class="add-member-form">
-          <h3>Añadir Miembro al Proyecto</h3>
-          <form @submit.prevent="addMember">
-            <div class="form-group">
-              <label for="memberSelect">Seleccionar Usuario:</label>
-              <select v-model="newMember" id="memberSelect" required>
-                <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
-              </select>
-            </div>
-            <div class="form-group">
-              <button type="submit">Añadir Miembro</button>
-            </div>
-          </form>
+ <div class="project-details">
+  <div v-if="isLoading" class="loading">Cargando detalles del proyecto...</div>
+  <div v-else-if="project" class="content">
+    <!-- Sección de detalles del proyecto -->
+    <div class="project">
+      <h1>Nombre: {{ project.name }}</h1>
+      <p>Descripcion: {{ project.description }}</p>
+      <p>Responsable: {{ project.responsibleUsername }}</p>
+       <!-- Barra de progreso de tareas -->
+       <div class="progress-container">
+          <div class="progress-bar" :style="{ width: progressPercentage() + '%' }"></div>
         </div>
-      </div>
+        <p>{{ completedTasks() }} de {{ totalTasks }} tareas completadas ({{ progressPercentage() }}%)</p>
+     
+    </div>
 
-      <!-- Tareas del proyecto -->
-      <div class="tasks">
-        <h2>Tareas</h2>
-        <ul>
-          <li v-for="task in project.tasks" :key="task.id">
-            {{ task.title }} - 
-            <span :class="taskStatusClass(task.status)">{{ task.status }}</span>
-            <button @click="confirmDeleteTask(task.id)">🗑️ Delete</button>
-          </li>
-        </ul>
-        <button @click="toggleTaskForm">➕ Añadir Tarea</button>
-      </div>
+<div class="padre" >
+    <!-- Tareas del proyecto -->
+    <div class="tasks">
+      <h2>Tareas</h2>
+      <ul>
+        <li v-for="task in project.tasks" :key="task.id">
+          {{ task.title }} -
+          <span :class="taskStatusClass(task.status)">{{ task.status }}</span>
+          <button @click="confirmDeleteTask(task.id)">🗑️ Delete</button>
+        </li>
+      </ul>
+      <button @click="toggleTaskForm">➕ Añadir Tarea</button>
+    </div>
 
-      <div v-if="isTaskFormVisible">
-        <createTasks :project="project.id" />
-      </div>
+    <div v-if="isTaskFormVisible" class="task-form">
+      <button class="x" @click="toggleTaskForm">X</button>
+      <createTasks :project="project.id" />
+    </div>
     
+    <!-- Miembros del proyecto -->
+    <div class="members">
+      <h2>Miembros ({{ project.members.length }})</h2>
+      <ul>
+        <li v-for="member in project.members" :key="member.id">{{ member.username }}</li>
+      </ul>
+      <button @click="toggleMemberForm">➕ Añadir Miembro</button>
 
-      <button @click="goBack">🔙 Volver a Proyectos</button>
+      <!-- Formulario para añadir miembros -->
+      <div v-if="isMemberFormVisible" class="add-member-form">
+        <h3>Añadir Miembro al Proyecto</h3>
+        <form @submit.prevent="addMember">
+          <div class="form-group">
+            <label for="memberSelect">Seleccionar Usuario:</label>
+            <select v-model="newMember" id="memberSelect" required>
+              <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <button type="submit">Añadir Miembro</button>
+          </div>
+        </form>
+      </div>
     </div>
-    <div v-else>
-      <p>No se encontró el proyecto. Verifique el ID.</p>
-    </div>
+
+   
   </div>
+  
+
+</div>
+<div v-else>
+    <p>No se encontró el proyecto. Verifique el ID.</p>
+  </div>
+   <button @click="goBack">🔙 Volver a Proyectos</button>
+</div>
+
 </template>
 
 <script setup>
@@ -86,10 +99,10 @@ const loadProject = async () => {
   try {
     const response = await projectService.getProjectById(route.params.id);
     project.value = response.data;
-    const taskComplet = ref(project.value.tasks.filter(e=>e.status ==="Complete"))
+    const taskComplet = ref(project.value.tasks.filter(e=>e.status ==="Completed"))
     console.log(project.value.tasks)
     console.log("completeeeeeeeeeeeee "+taskComplet.value)
-
+    console.log("ks"+progressPercentage())
   } catch (error) {
     console.error("Error al cargar detalles del proyecto:", error);
     alert("Error al cargar detalles del proyecto");
@@ -119,6 +132,16 @@ const toggleMemberForm = () => {
   isMemberFormVisible.value = !isMemberFormVisible.value;
 };
 
+function completedTasks(){
+  return project.value.tasks.filter(taska=>taska.status==="Completed").length
+}
+
+function totaTasks (){
+  return project.value.tasks.length
+}
+function progressPercentage(){
+  return totaTasks()>0 ? Math.round((completedTasks()/totaTasks())*100):0
+}
 
 // Añadir un miembro al proyecto
 const addMember = async () => {
@@ -174,12 +197,38 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* Estilos principales */
-
-.project-details {
+/* Estilos principales */.padre {
+  display: flex; /* Para organizar los elementos hijos en una fila */
+  justify-content: space-between; /* Para distribuir el espacio entre los elementos */
+  align-items: flex-start; /* Alinea los elementos en la parte superior */
+  gap: 20px; /* Espacio entre las columnas */
   padding: 20px;
 }
 
+.project, .members, .tasks {
+  flex: 1; /* Cada sección tomará un espacio proporcional igual */
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.x{
+  float: right;
+}
+
+.project {
+  background-color: #4aa0e6;
+  color: #221616;
+}
+
+.members, .tasks {
+  background-color: #fff;
+  flex-direction: column; /* Asegura que el contenido interno esté en columnas */
+
+}
+
+
+/* Ajustar los contenedores de miembros y tareas para que se alineen en una fila */
 ul {
   list-style: none;
   padding: 0;
@@ -187,6 +236,10 @@ ul {
 
 li {
   margin-bottom: 10px;
+  padding: 8px;
+  background-color: white;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 button {
@@ -196,6 +249,7 @@ button {
   border: none;
   border-radius: 5px;
   cursor: pointer;
+  
 }
 
 button:hover {
@@ -208,17 +262,11 @@ button:hover {
   color: #555;
 }
 
-/* Estilos para el formulario */
-.task-form,
-.add-member-form {
+.task-form, .add-member-form {
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
   background-color: #f9f9f9;
-}
-
-.tasks, .members {
-  margin-top: 20px;
 }
 
 .status-completed {
@@ -233,152 +281,100 @@ button:hover {
   color: blue;
 }
 
-.project-details {
-  padding: 20px;
+
+.task-form,.tasks ul, .members ul {
+  max-height: 500px; /* Limitar la altura de las listas */
+  overflow-y: auto; /* Hacer scroll si hay muchos elementos */
+}
+
+.tasks li, .members li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 h2 {
-  margin-top: 20px;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
-ul {
-  list-style: none;
-  padding: 0;
-}
-
-li {
-  margin-bottom: 10px;
-}
-
-button {
-  margin-left: 10px;
-  background-color: #e74c3c;
-  color: white;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-button:hover {
-  background-color: #c0392b;
-}
-
-/* Clases para el estado de las tareas */
-.status-completed {
-  color: green;
-}
-
-.status-pending {
-  color: orange;
-}
-
-.status-in-progress {
-  color: blue;
-}
-
-/* Indicador de carga */
-.loading {
-  margin-top: 20px;
-  font-weight: bold;
-  color: #555;
-}
-
-/* Estilos para el formulario de tareas */
 .task-form {
-  margin-top: 25%;
+  margin-top: 20px;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
   background-color: #f9f9f9;
+  min-width: 20%;
 }
-.project{
-  height: 10%;
+.progress-container {
   width: 100%;
-  background-color: #4aa0e6;
+  background-color: #e0e0e0;
   border-radius: 10px;
-  color: #221616;
-}
-.members {
-  position: absolute; /* Posición absoluta para colocarla a la derecha */
-  right: 0; /* Ubicarla en el extremo derecho */
-  top: 300px; /* Ajusta esto según el diseño general */
-  width: 250px; /* Ancho fijo */
-  height: 400px; /* Altura fija */
-  padding: 10px;
-  background-color: #f0f0f0; /* Color de fondo */
-  border-radius: 10px; /* Bordes redondeados */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle relieve */
-  overflow-y: auto; /* Scroll vertical si es necesario */
+  margin: 10px 0;
+  height: 20px;
+  overflow: hidden;
 }
 
-.members h2 {
-  margin-top: 0;
-  text-align: center; /* Centrar el texto del título */
+.progress-bar {
+  height: 100%;
+  background-color: #1400f3;
+  transition: width 0.3s ease;
 }
 
-.members ul {
-  list-style: none; /* Eliminar viñetas de la lista */
-  padding: 0; /* Quitar relleno */
-  margin: 0;
+/* Media Queries para responsive design */
+@media (max-width: 768px) {
+  .padre {
+    flex-direction: column; /* Cambia las columnas a una sola columna */
+    gap: 10px; /* Reduce el espacio entre los elementos */
+  }
+
+
+  .tasks ul, .members ul {
+  max-height: 250px; /* Limitar la altura de las listas */
+  overflow-y: auto; /* Hacer scroll si hay muchos elementos */
+}
+  .tasks,.members,.task-form {
+  width: 100%;
+  }
+  .project, .members, .tasks {
+    padding: 15px;
+  }
+
+  h1, h2 {
+    font-size: 1.5rem; /* Ajusta el tamaño de los títulos */
+  }
+
+  button {
+    font-size: 0.9rem; /* Ajusta el tamaño de los botones */
+    padding: 7px 12px;
+  }
 }
 
-.members li {
-  margin-bottom: 10px;
-  padding: 8px;
-  background-color: white;
-  border-radius: 5px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+@media (max-width: 480px) {
+  
+  .tasks ul, .members ul {
+  max-height: 250px; /* Limitar la altura de las listas */
+  overflow-y: auto; /* Hacer scroll si hay muchos elementos */
 }
+  .padre {
+    padding: 10px; /* Reduce el padding general */
+  }
 
-.tasks {
-  position: absolute; /* Posición absoluta para colocarla en una ubicación específica */
-  left: 0; /* Alinear el contenedor de tareas a la izquierda */
-  top: 300px; /* Ajusta esto según la ubicación deseada en tu diseño */
-  width: 400px; /* Ancho fijo para el área de tareas */
-  max-height: 400px; /* Altura máxima con scroll si hay muchas tareas */
-  padding: 10px;
-  background-color: #f9f9f9; /* Color de fondo */
-  border-radius: 10px; /* Bordes redondeados */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra para darle un efecto de profundidad */
-  overflow-y: auto; /* Scroll vertical si es necesario */
-}
+  h1, h2 {
+    font-size: 1.2rem; /* Ajusta aún más el tamaño de los títulos */
+  }
 
-.tasks h2 {
-  text-align: center; /* Centrar el título */
-  margin-bottom: 10px;
-}
+  button {
+    font-size: 0.8rem; /* Ajusta el tamaño de los botones */
+    padding: 5px 10px;
+  }
 
-.tasks ul {
-  list-style: none; /* Quitar los estilos de viñetas */
-  padding: 0;
-  margin: 0;
-}
+  .tasks ul, .members ul {
+    max-height: 200px; /* Limitar aún más la altura de las listas en pantallas pequeñas */
+  }
 
-.tasks li {
-  padding: 10px;
-  background-color: #fff;
-  margin-bottom: 10px;
-  border-radius: 5px; /* Bordes redondeados */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Sombra ligera */
-  display: flex; /* Flexbox para alinear los elementos dentro del li */
-  justify-content: space-between; /* Espaciar el título de la tarea y el botón de borrar */
-}
+  .project, .members, .tasks {
+    padding: 10px; /* Reduce el padding interno */
+  }}
 
-.tasks li span {
-  font-weight: bold; /* Hacer el estado de la tarea más visible */
-}
-
-.tasks button {
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.tasks button:hover {
-  background-color: #c0392b;
-}
 </style>
