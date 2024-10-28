@@ -43,7 +43,17 @@ class AuthService {
   }
 
   registerTenant(user) {
-    return api.post('/auth/signup', {
+    return api.post('/auth/registerCompany', {
+      tenantName: user.tenantName,
+      username: user.username,
+      email: user.email,
+      password: user.password,
+      role: user.role
+    });
+  }
+  
+  registerUser(user) {
+    return api.post('/auth/registerUserToCompany', {
       tenantName: user.tenantName,
       username: user.username,
       email: user.email,

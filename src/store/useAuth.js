@@ -1,31 +1,30 @@
-import { ref, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import AuthService from '../services/auth.service';
 
-const user = ref(AuthService.getCurrentUser()); // Obtiene el usuario actual al cargar
+const user = ref(AuthService.getCurrentUser()); // Obtener usuario al cargar
 
 const logout = () => {
-  AuthService.logout(); // Llama al servicio de logout
-  user.value = null; // Limpia el usuario del estado
+  AuthService.logout();
+  user.value = null;
 };
 
-// Observa los cambios en el usuario actual
 watch(
   () => AuthService.getCurrentUser(),
   (newUser) => {
-    user.value = newUser; // Actualiza el usuario reactivo
+    user.value = newUser;
   },
-  { immediate: true } // Ejecuta inmediatamente
+  { immediate: true }
 );
 
-// Agrega la funcionalidad para verificar si el usuario es administrador
-const isAdmin = () => {
-  return user.value && user.value.role === 'admin' || user.value.roles.includes("ROLE_MANAGER"); // Verifica si el usuario es admin
-};
+// Define isAdmin como una propiedad computada reactiva
+const isAdmin = computed(() => {
+  return user.value && user.value.roles && (user.value.roles.includes("ROLE_ADMIN") || user.value.roles.includes("ROLE_MANAGER"));
+});
 
 export function useAuth() {
   return {
     user,
     logout,
-    isAdmin, // Exporta la función isAdmin
+    isAdmin,
   };
 }

@@ -13,9 +13,13 @@
         <p>Tareas -> ({{ project.tasks.length }})</p>
         <button @click="viewProject(project.id)">👁️ Ver detalle</button>
       </div>
-      <button @click="toggleCreateProjectForm" class="create-project-button">
+      <div v-if="!isAdmin">
+        <button   @click="toggleCreateProjectForm" class="create-project-button">
         ➕ Crear nuevo proyecto
       </button>
+      </div  >
+     
+      
     </div>
 
     <!-- Formulario de creación de proyecto -->
@@ -32,8 +36,14 @@ import dayjs from 'dayjs';
 import { ref, onMounted } from 'vue';
 import projectService from '@/services/projectService';
 import { useRouter } from 'vue-router';
-import CreateProject from './CreateProject.vue';
-
+import CreateProject from '../components/CreateProject.vue';
+import authService from '@/services/auth.service';
+//import { useAuth } from '@/store/useAuth';
+const rol = authService.getCurrentUser().roles;
+const  isAdmin= ref(false)
+if(rol.includes("ROLE_USER")){
+  isAdmin.value=true;
+}
 const projects = ref([]);
 const showCreateProjectForm = ref(false);  // Controla si se muestra o no el formulario
 const router = useRouter();
@@ -45,7 +55,9 @@ const loadProjects = async () => {
     projects.value = response.data;
     console.log("goool"+response.data);
     console.log("goool " + JSON.stringify(response.data, null, 2)); // Con `null` y `2` para obtener un formato bonito
+    console.log( "ddddd"+projects.value)
 
+    
     if(sessionStorage.getItem("auth")==="true"){
       location.reload();
       sessionStorage.removeItem("auth")
@@ -60,6 +72,17 @@ onMounted(loadProjects);
 
 // Ver detalles del proyecto seleccionado
 const viewProject = (projectId) => {
+   
+  const rol = authService.getCurrentUser().roles;
+  console.log(rol)
+  if (rol.includes('ROLE_USER')) {
+    router.push(`/tasks`);
+    return;
+  }
+  
+  
+  
+  
   router.push(`/projects/${projectId}`); // Redirigir a la ruta de detalles del proyecto
 };
 

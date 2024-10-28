@@ -1,32 +1,14 @@
 import axios from 'axios';
-import AuthService from './auth.service';
 import apiClient from './api';
 
-const API_URL = 'http://localhost:8080/api/tasks';
 axios.defaults.withCredentials=true;
 class TaskService {
-  getTasksByUsername() {
-  const user = AuthService.getCurrentUser();
-  
-  console.log("--------------- " + user.accessToken);
-  
-  if (user && user.accessToken) {
-    return axios.get(API_URL, {
-      headers: {
-        'Authorization': 'Bearer ' + user.accessToken,
-        'Content-Type': 'application/json'
-      },
-      params:{
-        'tenantId': user.tenantId
-      }
-    }).then(response => response.data)
-    .catch(error => {
-      console.error("-----------There was an error fetching tasks:", error);
-      return Promise.reject(error);
-    });
-  } else {
-    return Promise.reject("No token found");
-  }
+
+
+getTasksByUsername(username) {
+ 
+  return apiClient.get(`´/tasks/users/${username}`);
+
 }
 
 createTask(task) {
@@ -50,7 +32,7 @@ updateTask(task) {
 
 // Eliminar una tarea
 deleteTask(taskId) {
-  return apiClient.delete(`/tasks/${taskId}`);
+  return apiClient.delete(`/tasks/delete/${taskId}`);
 }
 }
 

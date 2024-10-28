@@ -35,7 +35,6 @@ const loadProjects = async () => {
   try {
    const response = await projectService.getAllProjects();
     projects.value = response.data
-    console.log( "ddddd"+projects.value)
     
   } catch (error) {
     console.error("Error al cargar proyectos:", error);
@@ -48,6 +47,9 @@ const loadProjects = async () => {
 onMounted(loadProjects);
 
 const viewProject = (projectId) => {
+
+ 
+
   router.push(`/projects/${projectId}`);
 };
 
