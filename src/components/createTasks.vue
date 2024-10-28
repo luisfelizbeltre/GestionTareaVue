@@ -1,6 +1,6 @@
 <template>
     <div class="task-container">
-     <p>proyecto {{ props.project }}  </p> 
+     
       <h2>Crear Tarea</h2>
       <form @submit.prevent="createTask">
         <div class="form-group">
