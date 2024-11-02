@@ -52,6 +52,8 @@ import { ref, onMounted } from 'vue';
 import TaskService from '../services/task.service';
 import AuthService from '../services/auth.service';
 import draggable from 'vuedraggable';
+import { useRoute } from 'vue-router';
+//import router from '@/router';
 
 const tasks = ref([]);
 const user = ref(AuthService.getCurrentUser());
@@ -89,6 +91,7 @@ onMounted(() => {
 // Función para manejar el evento de arrastre
 const onDrop = (evt) => {
   const { item, to } = evt;
+   console.log( useRoute().params.projectId)
 
   // Aquí puedes actualizar el estado de la tarea en el backend
   console.log(`Moved task: ${item.name} to ${to.id}`);

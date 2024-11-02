@@ -3,7 +3,7 @@ import Home from '../views/Home.vue';
 import LoginComponent from '../components/LoginComponent.vue';
 import ProfileComponent from '../components/ProfileComponent.vue';
 import CreateProject from '../components/CreateProject.vue';
-import UserTasks from '../views/UserTasks.vue'; // Importa la vista
+import UserTasks from '../views/UserTasks.vue'; 
 import RegisterTenant from '../components/RegisterTenant';
 import createTasks from '../components/createTasks.vue';
 

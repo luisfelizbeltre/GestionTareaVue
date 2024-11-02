@@ -16,6 +16,14 @@ class ProjectService {
   getProjectById(id){
     return api.get(`/projects/${id}`);
   }
+
+  getAllMembers(projectId){
+    return api.get(`/projects/${projectId}/members`)
+  }
+
+  deleteMember(projectId,memberId){
+    return api.delete(`/projects/${projectId}/members/${memberId}`)
+  }
 }
 
 export default new ProjectService();

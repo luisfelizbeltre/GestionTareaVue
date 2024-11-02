@@ -1,81 +1,144 @@
 <template>
-  <nav>
-    <div class="dashboard-title">DASBOARD Manager</div>
-    <router-link to="/" aria-label="Ir a la página principal">Home</router-link>
-    <router-link v-if="user" to="/dashboard" aria-label="Ver mis proyectos">Proyectos</router-link>
-    <router-link v-if="user" to="/tasks" aria-label="Ver mis tareas">Tareas</router-link>
-    <router-link v-if="user" to="/profile" aria-label="Ir a mi perfil">Perfil</router-link>
-    <router-link v-if="user && isAdmin" to="/manage-users" aria-label="Gestionar usuarios">Gestionar usuarios</router-link>
-    <router-link v-if="!user" to="/login" aria-label="Iniciar sesión">Login</router-link>
-    <router-link v-if="!user" to="/registeradm" aria-label="Registrar un nuevo administrador">Register</router-link>
-    <button v-if="user" @click="handleLogout" aria-label="Cerrar sesión">Logout</button>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+  <nav class="navbar navv navbar-expand-lg navbar-dark bg-primary px-3">
+    <a class="navbar-brand dashboard-title" href="#">
+      {{ dynamicTitle }}
+    </a> <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+      aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item">
+          <router-link to="/" class="nav-link" aria-label="Ir a la página principal">
+            <i class="fas fa-home"></i> Home
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="user">
+          <router-link to="/dashboard" class="nav-link" aria-label="Ver mis proyectos">
+            <i class="fas fa-cogs"></i> DASHBOARD
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="user">
+          <router-link to="/tasks" class="nav-link" aria-label="Ver mis tareas">
+            <i class="fas fa-tasks"></i> Tareas
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="user">
+          <router-link to="/profile" class="nav-link" aria-label="Ir a mi perfil">
+            <i class="fas fa-user-circle"></i> Perfil
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="user && isAdmin">
+          <router-link to="/manage-users" class="nav-link" aria-label="Gestionar usuarios">
+            <i class="fas fa-users-cog"></i> Gestionar Usuarios
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="!user">
+          <router-link to="/login" class="nav-link" aria-label="Iniciar sesión">
+            <i class="fas fa-sign-in-alt"></i> Login
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="!user">
+          <router-link to="/registeradm" class="nav-link" aria-label="Registrar un nuevo administrador">
+            <i class="fas fa-user-plus"></i> Register
+          </router-link>
+        </li>
+        <li class="nav-item" v-if="user">
+          <button @click="handleLogout" class="btn btn-link nav-link" aria-label="Cerrar sesión">
+            <i class="fas fa-sign-out-alt"></i> Logout
+          </button>
+        </li>
+      </ul>
+    </div>
   </nav>
 </template>
 
 <script setup>
-import { useRouter } from 'vue-router';
+import { computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useAuth } from '../store/useAuth'; // Ruta al composable
-
 const router = useRouter();
-const { user, logout, isAdmin } = useAuth(); 
+const route = useRoute();
+
+const { user, logout, isAdmin, isManager } = useAuth();
 
 const handleLogout = () => {
   logout();
   router.push('/login');
 };
+
+
+// Computed property para actualizar el título basado en la ruta actual
+const dynamicTitle = computed(() => {
+  switch (route.path) {
+    case '/dashboard':
+      if (isAdmin.value) {
+        return "DASHBOARD ADMINISTRADOR"
+      } else if (isManager.value) {
+        return "DASHBOARD MODERADOR"
+      } else {
+        return "DASHBOARD USUARIOS"
+
+      }
+
+
+    case '/tasks':
+      return 'Gestion de tareas';
+    case '/profile':
+      return 'Mi Perfil';
+    case '/manage-users':
+      return 'GESTION DE USUARIOS';
+    case '/':
+      return 'HOME'
+    case '/projects':
+      return 'DESTALLE DEL PROYECTO'
+    default:
+       // Manejar subrutas que comienzan con '/projects/'
+       if (route.path.startsWith('/projects/')) {
+        return 'DETALLE DEL PROYECTO';
+        }
+      return '';
+  }
+});
 </script>
 
 <style scoped>
-nav {
-  display: flex;
-  flex-direction: row; /* Cambiado a fila para elementos uno al lado del otro */
-  align-items: center; /* Alinear verticalmente al centro */
-  gap: 1rem; /* Espaciado entre elementos */ 
-  padding: 1rem;
-  background-color: #185cdb; /* Color de fondo más oscuro */
-  border-bottom: 1px solid #ddd;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Sombra para un efecto elevado */
-  transition: background-color 0.3s ease; /* Transición para cambios de fondo */
-}
-
-nav:hover {
-  background-color: #2c4b92; /* Cambio de color al pasar el mouse */
-}
-
 .dashboard-title {
-  font-size: 24px; /* Ajusta el tamaño del título */
-  color: #ffffff;  /* Color del título */
-  font-weight: bold; /* Negrita para el título */
-  margin-right: auto; /* Para empujar los enlaces a la derecha */
+  font-size: 1.5rem;
+  /* Ajuste de tamaño de fuente para el título */
+  font-weight: bold;
+  color: #ffffff;
 }
 
-nav a {
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  /* Espacio entre ícono y texto */
+  font-size: 1rem;
+  color: #ffffff;
+}
+
+.nav-link:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+}
+
+.btn-link {
+  color: #ffffff;
+}
+
+.btn-link:hover {
   text-decoration: none;
-  color: #ffffff; /* Color del texto */
-  font-size: large;
-  padding: 10px; /* Espacio dentro de los enlaces */
-  border-radius: 5px; /* Bordes redondeados */
-  transition: background-color 0.3s ease; /* Transición para el fondo */
+  color: #e8ebee;
 }
+.navv {
+  position: sticky;
+  top: 0;
+  z-index: 50;
 
-nav a:hover {
-  background-color: rgba(255, 255, 255, 0.2); /* Color de fondo al pasar el mouse */
 }
-
-nav button {
-  background: none;
-  border: none;
-  color: #e8ebee; /* Color del texto del botón */
-  cursor: pointer;
-  font-size: large;
-  padding: 10px; /* Espacio dentro del botón */
-  border-radius: 5px; /* Bordes redondeados para el botón */
-  transition: background-color 0.3s ease, color 0.3s ease; /* Transiciones para el fondo y color */
-}
-
-nav button:hover {
-  background-color: rgba(255, 255, 255, 0.2); /* Color de fondo al pasar el mouse */
-  color: #ffffff; /* Cambiar el color del texto al pasar el mouse */
-}
-
 </style>

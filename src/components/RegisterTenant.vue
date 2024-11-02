@@ -1,225 +1,107 @@
 <template>
-  <div class="registration-form">
-    <h1>{{ title }}</h1>
-    <form @submit.prevent="register">
-      <!--  nombre de la organización -->
-      <div v-if="showTenantName" class="form-group">
-        <label for="tenantName">Nombre de la Organización</label>
-        <input v-model="tenantName" type="text" id="tenantName" required />
-      </div>
+  <div class="container mt-5">
+    <div class="card shadow-sm p-4">
+      <h1 class="text-center">{{ title }}</h1>
+      <form @submit.prevent="register">
+        
+        <!-- Organización -->
+        <div v-if="showTenantName" class="mb-3">
+          <label for="tenantName" class="form-label">Nombre de la Organización</label>
+          <input v-model="tenantName" type="text" id="tenantName" class="form-control" required />
+        </div>
 
-      <!--  nombre de usuario del administrador -->
-      <div class="form-group">
-        <label for="username">{{ usernameLabel }}</label>
-        <input v-model="username" type="text" id="username" required />
-      </div>
+        <!-- Nombre de usuario -->
+        <div class="mb-3">
+          <label for="username" class="form-label">{{ usernameLabel }}</label>
+          <input v-model="username" type="text" id="username" class="form-control" required />
+        </div>
 
-      <!-- correo electrónico del administrador -->
-      <div class="form-group">
-        <label for="email">Correo Electrónico</label>
-        <input v-model="email" type="email" id="email" required />
-      </div>
+        <!-- Correo Electrónico -->
+        <div class="mb-3">
+          <label for="email" class="form-label">Correo Electrónico</label>
+          <input v-model="email" type="email" id="email" class="form-control" required />
+        </div>
 
-      <!-- contraseña -->
-      <div class="form-group">
-        <label for="password">Contraseña</label>
-        <input v-model="password" type="password" id="password" required />
-      </div>
+        <!-- Contraseña -->
+        <div class="mb-3">
+          <label for="password" class="form-label">Contraseña</label>
+          <input v-model="password" type="password" id="password" class="form-control" required />
+        </div>
 
-      <div v-if="showRoleSelect" class="form-group" >
-        <label for="role"> Seleciona el Rol</label>
-        <select v-model="role" id="role" class="select" required>
-          <option value="user">Usuario</option>
-          <option value="mod">Moderador</option>
-          <option value="admin">Administrador</option>
-        </select>
-      </div>
+        <!-- Selección de rol -->
+        <div v-if="showRoleSelect" class="mb-3">
+          <label for="role" class="form-label">Selecciona el Rol</label>
+          <select v-model="role" id="role" class="form-select" required>
+            <option value="user">Usuario</option>
+            <option value="mod">Moderador</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
 
-      <button type="submit" class="submit-button">{{buttonText}}</button>
-    </form>
+        <!-- Botón de Enviar -->
+        <button type="submit" class="btn btn-primary w-100">{{ buttonText }}</button>
+      </form>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue';
-// import axios from 'axios';
+import { ref,defineProps } from 'vue';
 import AuthService from '../services/auth.service';
 import { useRouter } from 'vue-router';
-import { defineProps } from 'vue';
-
 
 
 const props = defineProps({
-
-  title:{
-    type:String,
-    default:'Registro de Organizacion',
-  },
-  
-    usernameLabel:{
-      type:String,
-      default:"Nombre del Adminstrador",
-    },
-
-    buttonText:{
-      type:String,
-      default:'Registrar Organizacion',
-    },
-    showTenantName:{
-      type:Boolean,
-      default:true,
-    },
-    showRoleSelect:{
-      type:Boolean,
-      default:false,
-    },
-
-  
-
+  title: { type: String, default: 'Registro de Organización' },
+  usernameLabel: { type: String, default: "Nombre del Administrador" },
+  buttonText: { type: String, default: 'Registrar Organización' },
+  showTenantName: { type: Boolean, default: true },
+  showRoleSelect: { type: Boolean, default: false },
 });
 
 const tenantName = ref('');
 const username = ref('');
 const email = ref('');
 const password = ref('');
-const role=ref('');
+const role = ref('');
 
 const router = useRouter();
+
 const register = async () => {
-  if (!props.showTenantName) {
-    const currentUser = AuthService.getCurrentUser();
-    tenantName.value = currentUser?.tenantName || '';
-    
   try {
-    const response = await AuthService.registerUser({
-    
-      tenantName: tenantName.value,
+    const data = {
+      tenantName: props.showTenantName ? tenantName.value : AuthService.getCurrentUser()?.tenantName || '',
       username: username.value,
       email: email.value,
       password: password.value,
-      role: [role.value], // Establecer el rol del usuario como administrador
-    });
+      role: [props.showRoleSelect ? role.value : 'ADMIN']
+    };
+    
+    const response = await (props.showTenantName ? AuthService.registerTenant(data) : AuthService.registerUser(data));
 
     if (response.data) {
       alert('Registro exitoso');
       router.push('/login');
-      console.log('Registro exitoso');
     }
   } catch (error) {
-    // Manejar errores de la solicitud, como mostrar mensajes de error
     console.error('Error en el registro:', error);
+    alert('Error en el registro');
   }
-    
-  }else{
-
- 
-  try {
-    const response = await AuthService.registerTenant({
-    
-      tenantName: tenantName.value,
-      username: username.value,
-      email: email.value,
-      password: password.value,
-      role: ['ADMIN'], // Establecer el rol del usuario como administrador
-    });
-
-    if (response.data) {
-      alert('Registro exitoso');
-      router.push('/login');
-      console.log('Registro exitoso');
-    }
-  } catch (error) {
-    // Manejar errores de la solicitud, como mostrar mensajes de error
-    console.error('Error en el registro:', error);
-  }
-}}; 
+};
 </script>
 
 <style scoped>
-  .select {
-   
-    padding: 10px;    
-    width: 100%;     
-  }
-.registration-form {
-  max-width: 400px;
-  margin: 50px auto;
-  padding: 20px;
-  background-color: #f7f7f7;
-  border-radius: 10px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  font-family: 'Arial', sans-serif;
+.container {
+  max-width: 500px;
 }
 
-h1 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 20px;
-}
-
-.form-group {
-  margin-bottom: 20px;
-}
-
-label {
-  display: block;
-  margin-bottom: 8px;
-  color: #555;
-}
-
-input[type='text'],
-input[type='email'],
-input[type='password'] {
-  width: 100%;
-  padding: 10px;
-  font-size: 16px;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  box-sizing: border-box;
-  outline: none;
-  transition: border-color 0.3s ease;
-}
-
-input[type='text']:focus,
-input[type='email']:focus,
-input[type='password']:focus {
-  border-color: #4CAF50;
-}
-
-.submit-button {
-  width: 100%;
-  padding: 10px;
-  background-color: #4085c1;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 18px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.submit-button:hover {
-  background-color: #45a049;
-}
-
-.submit-button:active {
-  background-color: #3e8e41;
-}
-
-.submit-button:focus {
-  outline: none;
+.card {
+  border-radius: 8px;
 }
 
 @media (max-width: 500px) {
-  .registration-form {
-    padding: 15px;
-  }
-
-  input[type='text'],
-  input[type='email'],
-  input[type='password'],
-  .submit-button {
-    font-size: 14px;
+  .container {
+    padding: 10px;
   }
 }
 </style>

@@ -1,114 +1,95 @@
 <template>
-  <div class="create-project-container">
-    <h2>Create Project</h2>
-    <form @submit.prevent="createProject" class="project-form">
-      <input v-model="name" placeholder="Project Name" class="input-field" />
-      <input v-model="description" placeholder="Description" class="input-field" />
-      
-    
-      <input v-model="responsibleUsername" placeholder="Responsible Username" class="input-field" />
-       <!-- Input para seleccionar la hora de fin -->
-    <!-- Input para seleccionar la fecha de fin -->
-    <label for="endDate">Fecha de fin:</label>
-    <input type="date" v-model="endDate" class="input-field" placeholder="Fecha de fin" />
+  <div class="container mt-5">
+    <div class="row justify-content-center">
+      <div class="col-md-8">
+        <div class="card shadow-lg">
+          <div class="card-header bg-primary text-white text-center">
+            <h2>Crear Proyecto</h2>
+          </div>
+          <div class="card-body">
+            <form @submit.prevent="createProject" class="needs-validation">
+              <div class="mb-3">
+                <label for="name" class="form-label">Nombre del Proyecto</label>
+                <input type="text" v-model="name" id="name" placeholder="Nombre del Proyecto" class="form-control" required />
+              </div>
 
-    <!-- Input para seleccionar la hora de fin -->
-    <label for="endTime">Hora de fin:</label>
-    <input type="time" v-model="endTime" class="input-field" placeholder="Hora de fin" />
+              <div class="mb-3">
+                <label for="description" class="form-label">Descripción</label>
+                <input type="text" v-model="description" id="description" placeholder="Descripción" class="form-control" required />
+              </div>
 
+              <div class="mb-3">
+                <label for="responsibleUsername" class="form-label">Responsable</label>
+                <input type="text" v-model="responsibleUsername" id="responsibleUsername" placeholder="Nombre del Responsable" class="form-control" required />
+              </div>
 
-      <button type="submit" class="submit-button">Create Project</button>
-    </form>
+              <div class="mb-3">
+                <label for="endDate" class="form-label">Fecha de Fin</label>
+                <input type="date" v-model="endDate" id="endDate" class="form-control" required />
+              </div>
+
+              <div class="mb-3">
+                <label for="endTime" class="form-label">Hora de Fin</label>
+                <input type="time" v-model="endTime" id="endTime" class="form-control" required />
+              </div>
+
+              <div class="text-center">
+                <button type="submit" class="btn btn-success w-100">Crear Proyecto</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
-
-
-  <script setup>
-  import { ref } from 'vue';
-  import projectService from '../services/projectService';
+<script setup>
+import { ref } from 'vue';
+import projectService from '../services/projectService';
 import dayjs from 'dayjs';
-  //import { useRouter } from 'vue-router';
-  const name = ref('');
-  const description = ref('');
-  const responsibleUsername = ref('');
-  const endDate=ref("")
-  const endTime=ref("")
-  const endDateTime=ref("");
- // const router = useRouter();
-  const createProject = async () => {
-if (endDate.value && endTime.value) {
-  endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format('YYYY-MM-DDTHH:mm:ss')
-  alert('Fecha y Hora combinadas:', endDateTime.value);
-} else { alert("seleciona una fecha y una hora")
-  return}
 
-    const project = {
-      name: name.value,
-      description: description.value,
-      responsibleUsername: responsibleUsername.value,
-      endDate:endDateTime.value
-    };
-    try {
-      await projectService.createProject(project);
-      alert('Project created successfully');
-      location.reload()
-      //router.push("/dashboard")
-    } catch (error) {
-      console.error(error);
-      alert('Error creating project');
-    }
+const name = ref('');
+const description = ref('');
+const responsibleUsername = ref('');
+const endDate = ref('');
+const endTime = ref('');
+const endDateTime = ref('');
+
+const createProject = async () => {
+  // Combinar fecha y hora en un solo valor
+  if (endDate.value && endTime.value) {
+    endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format('YYYY-MM-DDTHH:mm:ss');
+    alert(`Fecha y Hora combinadas: ${endDateTime.value}`);
+  } else {
+    alert("Por favor selecciona una fecha y una hora.");
+    return;
+  }
+
+  const project = {
+    name: name.value,
+    description: description.value,
+    responsibleUsername: responsibleUsername.value,
+    endDate: endDateTime.value,
   };
-  </script>
-  
+
+  try {
+    await projectService.createProject(project);
+    alert('Proyecto creado exitosamente');
+    location.reload(); // Recargar para actualizar la lista de proyectos
+  } catch (error) {
+    console.error('Error creando el proyecto:', error);
+    alert('Error al crear el proyecto');
+  }
+};
+</script>
+
 <style scoped>
-.create-project-container {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 20px;
-  background-color: #f9f9f9;
+.card {
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
-
-h2 {
-  text-align: center;
+.card-header {
   font-size: 24px;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-.project-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.input-field {
-  padding: 12px;
-  font-size: 18px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  outline: none;
-  transition: border-color 0.3s;
-}
-
-.input-field:focus {
-  border-color: #007BFF;
-}
-
-.submit-button {
-  padding: 12px;
-  font-size: 18px;
-  color: #fff;
-  background-color: #007BFF;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.submit-button:hover {
-  background-color: #0056b3;
+  font-weight: 500;
 }
 </style>

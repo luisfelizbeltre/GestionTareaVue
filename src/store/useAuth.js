@@ -18,13 +18,17 @@ watch(
 
 // Define isAdmin como una propiedad computada reactiva
 const isAdmin = computed(() => {
-  return user.value && user.value.roles && (user.value.roles.includes("ROLE_ADMIN") || user.value.roles.includes("ROLE_MANAGER"));
+  
+  return user.value && user.value.roles && (user.value.roles.includes("ROLE_ADMIN") );
 });
-
+const isManager = computed(()=>{
+  return user.value && user.value.roles && (user.value.roles.includes("ROLE_MODERATOR"));
+})
 export function useAuth() {
   return {
     user,
     logout,
     isAdmin,
+    isManager,
   };
 }

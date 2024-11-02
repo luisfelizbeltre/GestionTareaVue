@@ -3,31 +3,47 @@
     <div v-if="isLoading" class="loading">Cargando detalles del proyecto...</div>
     <div v-else-if="project" class="content">
       <!-- Sección de detalles del proyecto -->
-      <div class="project">
-        <h1>Nombre: {{ project.name }}</h1>
-        <p>Descripcion: {{ project.description }}</p>
-        <p>Responsable: {{ project.responsibleUsername }}</p>
-        <!-- Barra de progreso de tareas -->
-        <div class="progress-container">
-          <div class="progress-bar" :style="{ width: progressPercentage() + '%' }"></div>
+      <div class="card shadow mb-4">
+          <div class="card-body">
+            <h1 class="card-title">Nombre: {{ project.name }}</h1>
+            <p class="card-text"><strong>Descripción:</strong> {{ project.description }}</p>
+            <p class="card-text"><strong>Responsable:</strong> {{ project.responsibleUsername }}</p>
+  
+            <!-- Barra de progreso de tareas -->
+            <div class="progress mb-3">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                role="progressbar"
+                :style="{ width: progressPercentage() + '%' }"
+                :aria-valuenow="progressPercentage()"
+                aria-valuemin="0"
+                aria-valuemax="100">
+              </div>
+            </div>
+            <p>{{ completedTasks() }} de {{ totalTasks() }} tareas completadas ({{ progressPercentage() }}%)</p>
+          </div>
         </div>
-        <p>{{ completedTasks() }} de {{ totalTasks() }} tareas completadas ({{ progressPercentage() }}%)</p>
-
-      </div>
 
       <div class="padre">
         <!-- Tareas del proyecto -->
-        <div class="tasks">
-          <h2>Tareas</h2>
-          <ul>
-            <li v-for="task in project.tasks" :key="task.id">
-              {{ task.title }} -
-              <span :class="taskStatusClass(task.status)">{{ task.status }}</span>
-              <button @click="confirmDeleteTask(task.id)">🗑️ Delete</button>
-            </li>
-          </ul>
-          <button @click="toggleTaskForm">➕ Añadir Tarea</button>
-        </div>
+        <div class="col-md-6 mb-4 tasks" >
+            <div class="filter-container">
+              <input type="text"  v-model="searchQuery" class="form-control" placeholder="Buscar tareas" >
+            </div>
+            <div class="card shadow " >
+              <div class="card-body " >
+                <h2 class="card-title text-center">Tareas</h2>
+                <ul class="list-group mb-3">
+                  <li v-for="task in filteredTask" :key="task.id" class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ task.title }} - <span :class="taskStatusClass(task.status)">{{ task.status }}</span></span>
+                    <button @click="confirmDeleteTask(task.id)" class="btn btn-danger btn-sm">🗑️</button>
+                  </li>
+                </ul>
+                <button @click="toggleTaskForm" class="btn btn-primary w-100">➕ Añadir Tarea</button>
+              </div>
+            </div>
+            
+          </div>
 
         <div v-if="isTaskFormVisible" class="task-form">
           <button class="x" @click="toggleTaskForm">X</button>
@@ -38,13 +54,15 @@
         <div class="members">
           <h2>Miembros ({{ project.members.length }})</h2>
           <ul>
-            <li v-for="member in project.members" :key="member.id">{{ member.username }}</li>
+            <li v-for="member in project.members" :key="member.id">{{ member.username }} <button @click="confirmDeleteMember(member.id)" >🗑️</button></li>
           </ul>
           <button @click="toggleMemberForm">➕ Añadir Miembro</button>
 
           <!-- Formulario para añadir miembros -->
           <div v-if="isMemberFormVisible" class="add-member-form">
+            <button class="btn-close float-end" @click="toggleMemberForm"></button>
             <h3>Añadir Miembro al Proyecto</h3>
+            
             <form @submit.prevent="addMember">
               <div class="form-group">
                 <label for="memberSelect">Seleccionar Usuario:</label>
@@ -73,13 +91,22 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted,computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import projectService from '@/services/projectService';
 import userService from '@/services/userService';
 import createTasks from '../components/createTasks.vue';
 import taskService from '@/services/task.service';
 import DashBoard from './DashBoard.vue';
+const toggleTaskForm = () => {
+    isMemberFormVisible.value =false
+    isTaskFormVisible.value = !isTaskFormVisible.value;
+  }
+  const toggleMemberForm = () => {
+    isTaskFormVisible.value = false
+  
+    isMemberFormVisible.value = !isMemberFormVisible.value;
+  };
 
 const route = useRoute();
 const router = useRouter();
@@ -90,6 +117,7 @@ const project = ref({ members: [], tasks: [] });
 const users = ref([]);
 const isTaskFormVisible = ref(false);
 const isMemberFormVisible = ref(false);
+const searchQuery = ref('');
 
 
 
@@ -102,7 +130,7 @@ const loadProject = async () => {
     const response = await projectService.getProjectById(route.params.id);
     project.value = response.data;
     const taskComplet = ref(project.value.tasks.filter(e => e.status === "Completed"))
-    console.log(project.value.tasks)
+    console.log(project.value)
     console.log("completeeeeeeeeeeeee " + taskComplet.value)
     console.log("ks" + progressPercentage())
   } catch (error) {
@@ -124,15 +152,18 @@ const fetchUsers = async () => {
   }
 };
 
-// Alternar el formulario de añadir tarea
-const toggleTaskForm = () => {
-  isTaskFormVisible.value = !isTaskFormVisible.value;
-};
+const filteredTask = computed(()=>{
+    const searchText = searchQuery.value.trim().toLowerCase();
+  console.log(searchText);
+  
+    return project.value.tasks.filter(task =>{
+      const taskTitle = task.title ? task.title.toLowerCase():'';
+      return taskTitle.includes(searchText)
+    })
+  
+  })
+  
 
-// Alternar el formulario de añadir miembro
-const toggleMemberForm = () => {
-  isMemberFormVisible.value = !isMemberFormVisible.value;
-};
 
 function completedTasks() {
   return project.value.tasks.filter(taska => taska.status === "Completed").length
@@ -166,6 +197,21 @@ const confirmDeleteTask = (taskId) => {
   }
 };
 
+const confirmDeleteMember=(memberId)=>{
+  if (confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
+    deleteMember(memberId);
+  }
+
+}
+
+const deleteMember = async (memberId) =>{
+  try {
+    await projectService.deleteMember(project.value.id,memberId)
+    loadProject();
+  } catch (error) {
+    alert("Error al eliminar el miembro")
+  }
+}
 // Eliminar tarea
 const deleteTask = async (taskId) => {
   try {
@@ -202,13 +248,9 @@ onMounted(() => {
 /* Estilos principales */
 .padre {
   display: flex;
-  /* Para organizar los elementos hijos en una fila */
   justify-content: space-between;
-  /* Para distribuir el espacio entre los elementos */
   align-items: flex-start;
-  /* Alinea los elementos en la parte superior */
   gap: 20px;
-  /* Espacio entre las columnas */
   padding: 20px;
 }
 
@@ -261,7 +303,7 @@ li {
 }
 
 button {
-  background-color: #e74c3c;
+  background-color: #3c6fe7;
   color: white;
   padding: 5px 10px;
   border: none;
@@ -271,7 +313,7 @@ button {
 }
 
 button:hover {
-  background-color: #c0392b;
+  background-color: #2b7ac0;
 }
 
 .loading {
@@ -429,4 +471,4 @@ h2 {
     /* Reduce el padding interno */
   }
 }
-</style>
+</style> y aqui

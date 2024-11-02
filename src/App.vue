@@ -5,7 +5,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&display=swap" rel="stylesheet">
 
   <div id="app">
-    <NavBar class="nav"/>
+    <NavBar />
     <router-view></router-view>
   </div>
   
@@ -23,11 +23,7 @@ import NavBar from './components/NavbarComponent.vue';
 * {
     font-family: 'Roboto', sans-serif;
 }
-.nav {
-  position: sticky;
-  top: 0;
 
-}
 
 
 </style>
