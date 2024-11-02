@@ -53,14 +53,13 @@
   </template>
   
   <script setup>
-  import { ref, onMounted } from 'vue';
+  import { ref, onMounted,defineProps } from 'vue';
   import TaskService from '../services/task.service';
-  import UserService from '../services/userService';
-  import { defineProps } from 'vue';
   import authService from '@/services/auth.service';
+  import projectService from '@/services/projectService';
 const props = defineProps({
   project: {
-    type: String,
+    type: [String,Number],
     required: true
   }
 });
@@ -78,7 +77,7 @@ const task = ref({
   
   const fetchUsers = async () => {
     try {
-      const response = await UserService.getAllUsers();
+      const response = await projectService.getAllMembers(props.project);
       users.value = response.data;
     } catch (error) {
       console.error("There was an error fetching the users:", error);
