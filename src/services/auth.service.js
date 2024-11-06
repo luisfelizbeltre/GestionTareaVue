@@ -58,7 +58,8 @@ class AuthService {
       username: user.username,
       email: user.email,
       password: user.password,
-      role: user.role
+      role: user.role,
+      projectName:user.projectName
     });
   }
 

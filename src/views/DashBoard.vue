@@ -19,7 +19,23 @@
         <button @click="viewProject(project.id)" class="btn btn-outline-primary btn-sm">
           👁️ Ver detalle
         </button>
+         <!-- Botón para eliminar el proyecto -->
+      <button  @click="confirmDeleteProject(project.id)" class="btn float-end btn-succes">
+      🗑️ Eliminar Proyecto
+      </button>
+      
+    </div>
+    <div class="progress mb-3">
+              <div
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                role="progressbar"
+                :style="{ width: progressPercentage(project) + '%' }"
+                :aria-valuenow="progressPercentage(project)"
+                aria-valuemin="0"
+                aria-valuemax="100">
+              </div>
       </div>
+      <p>{{ completedTasks(project) }} de {{ project.tasks.length }} tareas completadas ({{ progressPercentage(project) }}%)</p>
     </div>
      
 
@@ -53,6 +69,7 @@ import projectService from '@/services/projectService';
 import { useRouter } from 'vue-router';
 import CreateProject from '../components/CreateProject.vue';
 import authService from '@/services/auth.service';
+import Swal from 'sweetalert2';
 
 const isAdmin = ref(false);
 const roles = authService.getCurrentUser().roles;
@@ -73,6 +90,19 @@ const filteredProjects = computed(() => {
   });
 });
 
+function completedTasks(project) {
+  // Verifica que project y project.tasks estén definidos
+  return project && project.tasks ? project.tasks.filter(task => task.status === "Completed").length : 0;
+}
+
+function progressPercentage(project) {
+  // Verifica que project y project.tasks estén definidos
+  const total = project && project.tasks ? project.tasks.length : 0;
+  return total > 0 ? Math.round((completedTasks(project) / total) * 100) : 0;
+}
+
+
+
 const projects = ref([]);
 const showCreateProjectForm = ref(false);
 const router = useRouter();
@@ -87,7 +117,8 @@ const loadProjects = async () => {
     }
   } catch (error) {
     console.error("Error al cargar proyectos:", error);
-    alert("Error al cargar proyectos");
+    Swal.fire("Error al cargar proyectos.", "error");
+
   }
 };
 
@@ -102,18 +133,68 @@ const viewProject = (projectId) => {
 };
 
 const formatDate = (date) => {
+
+
+
   return date ? dayjs(date).format('DD/MM/YYYY HH:mm') : "Fecha no disponible";
 };
 
 const toggleCreateProjectForm = () => {
   showCreateProjectForm.value = !showCreateProjectForm.value;
 };
+
+const confirmDeleteProject = (projectId) =>{
+  Swal.fire({
+    title: "¿Estás seguro de que quieres eliminar este proyecto?",
+    text: "Esta acción no se puede deshacer",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then((result) =>{
+    if (result.isConfirmed) {
+      deleteProject(projectId);
+      
+    }
+  } );
+};
+// Función para eliminar el proyecto y redirigir al usuario
+const deleteProject = async (projectId) => {
+  try {
+    await projectService.deleteProject(projectId);
+   console.log(projectId)
+    Swal.fire("¡Eliminado!", "El proyecto ha sido eliminado correctamente.", "success");
+    loadProjects()
+  } catch (error) {
+    console.error("Error al eliminar el proyecto:", error);
+    Swal.fire("Error", "Hubo un problema al eliminar el proyecto.", "error");
+  }
+};
+
+
 </script>
 
 <style scoped>
 .dashboard-container {
   display: flex;
   gap: 20px;
+}
+
+.progress-container {
+  width: 100%;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  margin: 10px 0;
+  height: 20px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  height: 100%;
+  background-color:#185cdb;
+  transition: width 0.3s ease;
 }
 
 .projects-list {

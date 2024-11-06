@@ -57,6 +57,8 @@
   import TaskService from '../services/task.service';
   import authService from '@/services/auth.service';
   import projectService from '@/services/projectService';
+  import Swal from 'sweetalert2';
+
 const props = defineProps({
   project: {
     type: [String,Number],
@@ -88,10 +90,11 @@ const task = ref({
     try {
       task.value.tenantId = authService.getCurrentUser().tenantId;
       await TaskService.createTask(task.value);
-      alert('Task created successfully!');
-      location.reload()
-      // Redirige a la lista de tareas después de crearla
-      
+      Swal.fire("Añadida!", "La tarea ha sido añadida correctamente.", "success");
+
+      setTimeout(() => {
+      location.reload();
+    }, 1500); 
     } catch (error) {
       console.error("There was an error creating the task:", error);
     }
@@ -100,7 +103,7 @@ const task = ref({
   onMounted(fetchUsers);
   </script>
   
-  <style scoped>
+<style scoped>
   .task-container {
     max-width: 400px;
     margin: 0 auto;
@@ -151,5 +154,5 @@ const task = ref({
   button:hover {
     background-color: #218838;
   }
-  </style>
+</style>
   

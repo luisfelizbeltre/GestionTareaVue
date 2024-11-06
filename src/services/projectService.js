@@ -16,6 +16,10 @@ class ProjectService {
   getProjectById(id){
     return api.get(`/projects/${id}`);
   }
+  deleteProject(projectId){
+
+    return api.delete(`/projects/${projectId}`)
+  }
 
   getAllMembers(projectId){
     return api.get(`/projects/${projectId}/members`)

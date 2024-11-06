@@ -54,7 +54,7 @@
         <div class="members">
           <h2>Miembros ({{ project.members.length }})</h2>
           <ul>
-            <li v-for="member in project.members" :key="member.id">{{ member.username }} <button @click="confirmDeleteMember(member.id)" >🗑️</button></li>
+            <li v-for="member in project.members" :key="member.id">{{ member.username  }}  <button @click="confirmDeleteMember(member.id)" >🗑️</button></li>
           </ul>
           <button @click="toggleMemberForm">➕ Añadir Miembro</button>
 
@@ -66,8 +66,8 @@
             <form @submit.prevent="addMember">
               <div class="form-group">
                 <label for="memberSelect">Seleccionar Usuario:</label>
-                <select v-model="newMember" id="memberSelect" required>
-                  <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+                <select v-model="newMember" id="memberSelect" >
+                  <option v-for="user in availableUsers" :key="user.id" :value="user.username">{{ user.username }}</option>
                 </select>
               </div>
               <div class="form-group">
@@ -89,24 +89,14 @@
   </div>
 
 </template>
-
 <script setup>
-import { ref, onMounted,computed } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import projectService from '@/services/projectService';
 import userService from '@/services/userService';
 import createTasks from '../components/createTasks.vue';
 import taskService from '@/services/task.service';
-import DashBoard from './DashBoard.vue';
-const toggleTaskForm = () => {
-    isMemberFormVisible.value =false
-    isTaskFormVisible.value = !isTaskFormVisible.value;
-  }
-  const toggleMemberForm = () => {
-    isTaskFormVisible.value = false
-  
-    isMemberFormVisible.value = !isMemberFormVisible.value;
-  };
+import Swal from 'sweetalert2';
 
 const route = useRoute();
 const router = useRouter();
@@ -118,131 +108,158 @@ const users = ref([]);
 const isTaskFormVisible = ref(false);
 const isMemberFormVisible = ref(false);
 const searchQuery = ref('');
-
-
-
-// Miembro seleccionado para agregar
-const newMember = ref('');
-
-// Función para cargar detalles del proyecto
+const newMember = ref(''); // Miembro seleccionado para agregar
+const toggleTaskForm = () => {
+    isMemberFormVisible.value =false
+    isTaskFormVisible.value = !isTaskFormVisible.value;
+  }
+  const toggleMemberForm = () => {
+    isTaskFormVisible.value = false
+  
+    isMemberFormVisible.value = !isMemberFormVisible.value;
+  };
+// Cargar detalles del proyecto
 const loadProject = async () => {
   try {
     const response = await projectService.getProjectById(route.params.id);
     project.value = response.data;
-    const taskComplet = ref(project.value.tasks.filter(e => e.status === "Completed"))
-    console.log(project.value)
-    console.log("completeeeeeeeeeeeee " + taskComplet.value)
-    console.log("ks" + progressPercentage())
   } catch (error) {
     console.error("Error al cargar detalles del proyecto:", error);
-    alert("Error al cargar detalles del proyecto");
-  } finally {DashBoard
+    Swal.fire("Error", "Error al cargar detalles del proyecto", "error");
+  } finally {
     isLoading.value = false;
   }
 };
 
-// Función para cargar la lista de usuarios
+// Cargar lista de usuarios
 const fetchUsers = async () => {
-  try { 
+  try {
     const response = await userService.getAllUsers();
     users.value = response.data;
   } catch (error) {
     console.error("Error al cargar los usuarios:", error);
-    alert("Error al cargar los usuarios");
+    Swal.fire("Error", "Error al cargar los usuarios", "error");
   }
 };
 
-const filteredTask = computed(()=>{
-    const searchText = searchQuery.value.trim().toLowerCase();
-  console.log(searchText);
-  
-    return project.value.tasks.filter(task =>{
-      const taskTitle = task.title ? task.title.toLowerCase():'';
-      return taskTitle.includes(searchText)
-    })
-  
-  })
-  
+// Filtrar tareas según la búsqueda
+const filteredTask = computed(() => {
+  const searchText = searchQuery.value.trim().toLowerCase();
+  return project.value.tasks.filter(task =>
+    task.title ? task.title.toLowerCase().includes(searchText) : false
+  );
+});
 
+// Usuarios disponibles para añadir al proyecto
+const availableUsers = computed(() => {
+  return users.value.filter(user => {
+    return !project.value.members.some(member => member.id === user.id);
+  });
+});
 
+// Calcular tareas completadas y porcentaje de progreso
 function completedTasks() {
-  return project.value.tasks.filter(taska => taska.status === "Completed").length
+  return project.value.tasks.filter(task => task.status === "Completed").length;
 }
-
 function totalTasks() {
-  return project.value.tasks.length
+  return project.value.tasks.length;
 }
 function progressPercentage() {
-  return totalTasks() > 0 ? Math.round((completedTasks() / totalTasks()) * 100) : 0
+  return totalTasks() > 0 ? Math.round((completedTasks() / totalTasks()) * 100) : 0;
 }
 
-// Añadir un miembro al proyecto
+// Añadir un miembro al proyecto con SweetAlert
 const addMember = async () => {
+  if (!newMember.value) {
+    Swal.fire("Error", "Seleccione un usuario para añadir", "error");
+    return;
+  }
   try {
     await projectService.addMemberToProject(project.value.id, newMember.value);
-    alert('Miembro añadido exitosamente!');
+    Swal.fire("Éxito", "Miembro añadido exitosamente", "success");
     newMember.value = '';
     isMemberFormVisible.value = false;
     loadProject();
   } catch (error) {
     console.error('Error al añadir miembro:', error);
-    alert('Error al añadir el miembro al proyecto');
+    Swal.fire("Error", "No se pudo añadir el miembro al proyecto", "error");
   }
 };
 
-// Confirmar eliminación de tarea
+// Confirmar eliminación de tarea con SweetAlert
 const confirmDeleteTask = (taskId) => {
-  if (confirm("¿Estás seguro de que quieres eliminar esta tarea?")) {
-    deleteTask(taskId);
-  }
+  Swal.fire({
+    title: "¿Estás seguro?",
+    text: "Esta acción eliminará la tarea permanentemente.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      deleteTask(taskId);
+    }
+  });
 };
 
-const confirmDeleteMember=(memberId)=>{
-  if (confirm("¿Estás seguro de que quieres eliminar este usuario?")) {
-    deleteMember(memberId);
-  }
+// Confirmar eliminación de miembro con SweetAlert
+const confirmDeleteMember = (memberId) => {
+  Swal.fire({
+    title: "¿Estás seguro?",
+    text: "Esta acción eliminará al miembro del proyecto.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
+      deleteMember(memberId);
+    }
+  });
+};
 
-}
-
-const deleteMember = async (memberId) =>{
+// Eliminar miembro del proyecto
+const deleteMember = async (memberId) => {
   try {
-    await projectService.deleteMember(project.value.id,memberId)
+    await projectService.deleteMember(project.value.id, memberId);
+    Swal.fire("Éxito", "Miembro eliminado correctamente", "success");
     loadProject();
   } catch (error) {
-    alert("Error al eliminar el miembro")
+    Swal.fire("Error", "No se pudo eliminar el miembro", "error");
   }
-}
-// Eliminar tarea
+};
+
+// Eliminar tarea del proyecto
 const deleteTask = async (taskId) => {
   try {
     await taskService.deleteTask(taskId);
+    Swal.fire("Éxito", "Tarea eliminada correctamente", "success");
     loadProject();
   } catch (error) {
     console.error("Error al eliminar la tarea:", error);
-    alert("Error al eliminar la tarea");
+    Swal.fire("Error", "No se pudo eliminar la tarea", "error");
   }
 };
 
-// Función para regresar a la lista de proyectos
+// Regresar a la lista de proyectos
 const goBack = () => {
   router.push('/dashboard');
 };
 
 // Asignar clases de estado para las tareas
-const taskStatusClass = (status) => {
-  return {
-    'status-completed': status === 'Completed',
-    'status-pending': status === 'Pendiente',
-    'status-nostarted': status === 'Not Started',
-  };
-};
+const taskStatusClass = (status) => ({
+  'status-completed': status === 'Completed',
+  'status-pending': status === 'Pendiente',
+  'status-nostarted': status === 'Not Started',
+});
 
-// Cargar el proyecto y la lista de usuarios al montar el componente
+// Cargar proyecto y lista de usuarios al montar el componente
 onMounted(() => {
   loadProject();
   fetchUsers();
 });
 </script>
+
 
 <style scoped>
 /* Estilos principales */

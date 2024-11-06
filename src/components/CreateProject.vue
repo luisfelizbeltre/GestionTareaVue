@@ -18,10 +18,13 @@
                 <input type="text" v-model="description" id="description" placeholder="Descripción" class="form-control" required />
               </div>
 
-              <div class="mb-3">
+            
+              <div class="form-group mb-3" >
                 <label for="responsibleUsername" class="form-label">Responsable</label>
-                <input type="text" v-model="responsibleUsername" id="responsibleUsername" placeholder="Nombre del Responsable" class="form-control" required />
-              </div>
+            <select v-model="responsibleUsername" id="assignedTo" required>
+              <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+            </select>
+          </div>
 
               <div class="mb-3">
                 <label for="endDate" class="form-label">Fecha de Fin</label>
@@ -45,9 +48,11 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref,onMounted } from 'vue';
 import projectService from '../services/projectService';
 import dayjs from 'dayjs';
+import Swal from 'sweetalert2';
+import userService from '@/services/userService';
 
 const name = ref('');
 const description = ref('');
@@ -60,9 +65,9 @@ const createProject = async () => {
   // Combinar fecha y hora en un solo valor
   if (endDate.value && endTime.value) {
     endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format('YYYY-MM-DDTHH:mm:ss');
-    alert(`Fecha y Hora combinadas: ${endDateTime.value}`);
+    Swal.fire("Fecha y Hora",`Fecha y Hora combinadas: ${endDateTime.value}`,"success");
   } else {
-    alert("Por favor selecciona una fecha y una hora.");
+    Swal.fire("Por favor selecciona una fecha y una hora.", "error");
     return;
   }
 
@@ -75,13 +80,31 @@ const createProject = async () => {
 
   try {
     await projectService.createProject(project);
-    alert('Proyecto creado exitosamente');
+    
+    Swal.fire("Proyecto creado exitosamente", "error");
     location.reload(); // Recargar para actualizar la lista de proyectos
   } catch (error) {
     console.error('Error creando el proyecto:', error);
-    alert('Error al crear el proyecto');
+  
+    Swal.fire("Error al crear proyectos.", "error");
   }
 };
+
+const users = ref([]);
+  
+  const fetchUsers = async () => {
+    try {
+      const response = await userService.getAllUsers();
+      console.log(response.data)
+      users.value = response.data.filter(user =>{
+       return user.roles && !user.roles.includes("ROLE_USER")
+      })
+    } catch (error) {
+      console.error("There was an error fetching the users:", error);
+    }
+  };
+  
+  onMounted(fetchUsers)
 </script>
 
 <style scoped>
@@ -92,4 +115,14 @@ const createProject = async () => {
   font-size: 24px;
   font-weight: 500;
 }
+
+select{
+  width: 100%;
+  
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+  }
 </style>

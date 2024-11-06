@@ -7,7 +7,6 @@ import UserTasks from '../views/UserTasks.vue';
 import RegisterTenant from '../components/RegisterTenant';
 import createTasks from '../components/createTasks.vue';
 
-import ProjectList from '@/views/ProjectList.vue';
 import ProjectDetails from '@/views/ProjectDetails.vue';
 import dashboard from '@/views/DashBoard.vue';
 import UserManagement from '@/views/UserManagement.vue';
@@ -25,7 +24,7 @@ const routes = [
 
 // Rutas relacionadas con proyectos (requieren autenticación)
 { path: '/create-project', component: CreateProject, meta: { requiresAuth: true,requireRole:['ROLE_ADMIN'] } },  // Crear proyecto
-{ path: '/proyects', component: ProjectList, meta: { requiresAuth: true } },  // Lista de proyectos
+//{ path: '/proyects', component: ProjectList, meta: { requiresAuth: true } },  // Lista de proyectos
 { path: '/projects/:id', component: ProjectDetails, meta: { requiresAuth: true,requireRole:['ROLE_ADMIN','ROLE_MODERATOR'] } },  // Detalles del proyecto
 
 // Otras rutas que requieren autenticación
