@@ -11,6 +11,7 @@ import ProjectDetails from '@/views/ProjectDetails.vue';
 import dashboard from '@/views/DashBoard.vue';
 import UserManagement from '@/views/UserManagement.vue';
 import unauthorized from '@/components/UnaUthorized.vue';
+import CompanyManagement from '@/views/CompanyManagement.vue';
 const routes = [
 // Rutas que no requieren autenticación
 { path: '/', component: Home },  // Página de inicio
@@ -30,8 +31,8 @@ const routes = [
 // Otras rutas que requieren autenticación
 { path: '/createTask', component: createTasks, meta: { requiresAuth: true,requireRole:['ROLE_ADMIN','ROLE_MODERATOR'] }},  // Crear tarea
 { path: '/dashboard', component: dashboard, meta: { requiresAuth: true } },  // Dashboard
-{ path: '/manage-users', component: UserManagement, meta: { requiresAuth: true,requireRole:['ROLE_ADMIN'] } },  // Gestión de usuarios
-
+{ path: '/manage-users', component: UserManagement, meta: { requiresAuth: true,requireRole:['ROLE_ADMIN','ROLE_SUPER'] } },  // Gestión de usuarios
+{ path: '/manage-company', component: CompanyManagement, meta: { requiresAuth: true,requireRole:['ROLE_SUPER'] } },  // Gestión de usuarios
   
 ];
 

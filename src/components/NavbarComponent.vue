@@ -1,10 +1,15 @@
 <template>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet"> <!-- Nueva línea -->
 
-  <nav class="navbar navv navbar-expand-lg navbar-dark bg-primary px-3">
-    <a class="navbar-brand dashboard-title" href="#">
-      {{ dynamicTitle }}
-    </a> <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+
+  <nav :class="['navbar', 'navbar-expand-lg', 'navbar-dark', isSuper ? 'bg-danger' : 'bg-primary', 'px-3']">
+    <a class="navbar-brand dashboard-title d-flex align-items-center" href="#">
+    <!-- Añadir logo -->
+    <img src="/pngwing.com.png" alt="Logo" class="logo mr-2">
+    {{ dynamicTitle }}
+  </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
       aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
@@ -21,7 +26,7 @@
             <i class="fas fa-cogs"></i> DASHBOARD
           </router-link>
         </li>
-        <li class="nav-item" v-if="user">
+        <li class="nav-item" v-if="user && !isSuper">
           <router-link to="/tasks" class="nav-link" aria-label="Ver mis tareas">
             <i class="fas fa-tasks"></i> Tareas
           </router-link>
@@ -31,9 +36,15 @@
             <i class="fas fa-user-circle"></i> Perfil
           </router-link>
         </li>
-        <li class="nav-item" v-if="user && isAdmin">
+        <li class="nav-item" v-if="(user && isAdmin) || (user && isSuper)  ">
           <router-link to="/manage-users" class="nav-link" aria-label="Gestionar usuarios">
             <i class="fas fa-users-cog"></i> Gestionar Usuarios
+          </router-link>
+        </li>
+        <li class="nav-item" v-if=" (user && isSuper)  ">
+          <router-link to="/manage-company" class="nav-link" aria-label="Gestionar empresas">
+            <i class="bi bi-building-fill-gear"></i> Gestionar Empresas
+
           </router-link>
         </li>
         <li class="nav-item" v-if="!user">
@@ -63,7 +74,7 @@ import { useAuth } from '../store/useAuth'; // Ruta al composable
 const router = useRouter();
 const route = useRoute();
 
-const { user, logout, isAdmin, isManager } = useAuth();
+const { user, logout, isAdmin, isManager,isSuper } = useAuth();
 
 const handleLogout = () => {
   logout();
@@ -78,7 +89,9 @@ const dynamicTitle = computed(() => {
       if (isAdmin.value) {
         return "DASHBOARD ADMINISTRADOR"
       } else if (isManager.value) {
-        return "DASHBOARD MODERADOR"
+        return "DASHBOARD MODERADOR" 
+      }else if (isSuper.value) {
+        return "DASHBOARD SUPER USUARIO"
       } else {
         return "DASHBOARD USUARIOS"
 
@@ -86,7 +99,9 @@ const dynamicTitle = computed(() => {
 
 
     case '/tasks':
-      return 'Gestion de tareas';
+      return 'GESTION DE TAREAS';
+      case '/manage-company':
+      return 'GESTION DE EMPRESAS';
     case '/profile':
       return 'Mi Perfil';
     case '/manage-users':
@@ -94,7 +109,7 @@ const dynamicTitle = computed(() => {
     case '/':
       return 'HOME'
     case '/projects':
-      return 'DESTALLE DEL PROYECTO'
+      return 'DESTALLEs DEL PROYECTO'
     default:
        // Manejar subrutas que comienzan con '/projects/'
        if (route.path.startsWith('/projects/')) {
@@ -135,10 +150,19 @@ const dynamicTitle = computed(() => {
   text-decoration: none;
   color: #e8ebee;
 }
-.navv {
+nav {
   position: sticky;
   top: 0;
   z-index: 50;
+
+}
+.logo {
+
+  width: 50px; /* Ajusta el tamaño según sea necesario */
+  height: 100%;
+  margin-right: 10px; /* Espacio entre el logo y el texto */
+  border-radius: 10px; /* Opcional: redondea los bordes */
+
 
 }
 </style>

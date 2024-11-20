@@ -24,11 +24,15 @@ const isAdmin = computed(() => {
 const isManager = computed(()=>{
   return user.value && user.value.roles && (user.value.roles.includes("ROLE_MODERATOR"));
 })
+const isSuper = computed(()=>{
+  return user.value && user.value.roles && (user.value.roles.includes("ROLE_SUPER"));
+})
 export function useAuth() {
   return {
     user,
     logout,
     isAdmin,
     isManager,
+    isSuper,
   };
 }

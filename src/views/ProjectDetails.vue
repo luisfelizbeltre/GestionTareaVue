@@ -8,7 +8,9 @@
             <h1 class="card-title">Nombre: {{ project.name }}</h1>
             <p class="card-text"><strong>Descripción:</strong> {{ project.description }}</p>
             <p class="card-text"><strong>Responsable:</strong> {{ project.responsibleUsername }}</p>
-  
+            <p class="card-text">
+         <strong> Fecha inicio:</strong> {{ formatDate(project.startDate) }} | <strong> Fecha fin:</strong> {{ formatDate(project.endDate) }}
+        </p>
             <!-- Barra de progreso de tareas -->
             <div class="progress mb-3">
               <div
@@ -23,7 +25,6 @@
             <p>{{ completedTasks() }} de {{ totalTasks() }} tareas completadas ({{ progressPercentage() }}%)</p>
           </div>
         </div>
-
       <div class="padre">
         <!-- Tareas del proyecto -->
         <div class="col-md-6 mb-4 tasks" >
@@ -97,6 +98,7 @@ import userService from '@/services/userService';
 import createTasks from '../components/createTasks.vue';
 import taskService from '@/services/task.service';
 import Swal from 'sweetalert2';
+import dayjs from 'dayjs';
 
 const route = useRoute();
 const router = useRouter();
@@ -123,6 +125,8 @@ const loadProject = async () => {
   try {
     const response = await projectService.getProjectById(route.params.id);
     project.value = response.data;
+    console.log(response.data);
+    
   } catch (error) {
     console.error("Error al cargar detalles del proyecto:", error);
     Swal.fire("Error", "Error al cargar detalles del proyecto", "error");
@@ -253,6 +257,13 @@ const taskStatusClass = (status) => ({
   'status-nostarted': status === 'Not Started',
 });
 
+const formatDate = (date) => {
+
+
+
+return date ? dayjs(date).format('DD/MM/YYYY HH:mm') : "Fecha no disponible";
+};
+
 // Cargar proyecto y lista de usuarios al montar el componente
 onMounted(() => {
   loadProject();
@@ -262,6 +273,9 @@ onMounted(() => {
 
 
 <style scoped>
+.filter-container{
+  margin-bottom: 10px;
+}
 /* Estilos principales */
 .padre {
   display: flex;
@@ -488,4 +502,4 @@ h2 {
     /* Reduce el padding interno */
   }
 }
-</style> y aqui
+</style> 
