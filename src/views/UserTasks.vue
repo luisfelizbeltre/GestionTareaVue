@@ -1,56 +1,87 @@
-
 <template>
- 
- <!-- Botones para seleccionar proyecto -->
- <div class="project-buttons"  id="Not Started">
-  <label for="">Proyectos:</label>
-      <button 
-        v-for="project in projects"
-        :key="project.id"
-        @click="selectProject(project.id)"
-        class="btn btn-outline-primary m-2"
-      >
-        {{ project.name }}
-      </button>
-    </div>
 
-  <div class="task-board">
-    <h2>Gestión de Tareas con Drag & Drop</h2>
-    <div class="task-columns">
-      <div class="task-column" data-status="Not Started">
-        <h3>Por Hacer</h3>
-        <draggable v-model="taskss.todo" group="tasks" @end="onDrop" item-key="id">
-          <template #item="{ element }">
-            <div class="task-item">
-              {{ element.title }}
-            </div>
-          </template>
-        </draggable>
-      </div>
-
-      <div class="task-column" data-status="In Progress">
-        <h3>En Progreso</h3>
-        <draggable v-model="taskss.inProgress" group="tasks" @end="onDrop" item-key="id">
-          <template #item="{ element }">
-            <div class="task-item">
-              {{ element.title }}
-            </div>
-          </template>
-        </draggable>
-      </div>
-
-      <div class="task-column" data-status="Completed">
-        <h3>Completadas</h3>
-        <draggable :list="taskss.done" group="tasks" @end="onDrop" item-key="id">
-          <template #item="{ element }">
-            <div class="task-item">
-              {{ element.title }}
-            </div>
-          </template>
-        </draggable>
-      </div>
-    </div>
+  <!-- Botones para seleccionar proyecto -->
+  <div class="project-buttons" id="Not Started">
+    <label for="">Proyectos:</label>
+    <button v-for="project in projects" :key="project.id" @click="selectProject(project.id)"
+      class="btn btn-outline-primary m-2">
+      {{ project.name }}
+    </button>
   </div>
+  <div class="task-board">
+  <h2>Gestión de Tareas con Drag & Drop</h2>
+  <div class="task-columns">
+    <div class="task-column" data-status="Pendiente">
+      <h3>Por Hacer</h3>
+      <draggable v-model="taskss.todo" group="tasks" @end="onDrop" item-key="id">
+        <template #item="{ element }">
+          <div class="task-item">
+            <h5 @click="openModal(element)" class="task-title">
+              {{ element.title }}
+              <span class="toggle-icon" v-if="element.isExpanded">🔽</span>
+              <span class="toggle-icon" v-else>▶️</span>
+            </h5>
+            <div v-if="element.isExpanded" class="task-details">
+              <p><strong>Descripción:</strong> {{ element.description }}</p>
+              <p><strong>Fecha de Vencimiento:</strong> {{ element.due_date }}</p>
+              <p><strong>Prioridad:</strong> {{ element.priority }}</p>
+            
+            </div>
+          </div>
+        </template>
+      </draggable>
+    </div>
+
+    <div class="task-column" data-status="En Progreso">
+      <h3>En Progreso</h3>
+      <draggable v-model="taskss.inProgress" group="tasks" @end="onDrop" item-key="id">
+        <template #item="{ element }">
+          <div class="task-item">
+            <h5 @click="toggleTaskDetails(element)" class="task-title">
+              {{ element.title }}
+              <span class="toggle-icon" v-if="element.isExpanded">🔽</span>
+              <span class="toggle-icon" v-else>▶️</span>
+            </h5>
+            <div v-if="element.isExpanded" class="task-details">
+              <p><strong>Descripción:</strong> {{ element.description }}</p>
+              <p><strong>Fecha de Vencimiento:</strong> {{ element.due_date }}</p>
+              <p><strong>Prioridad:</strong> {{ element.priority }}</p>
+            
+            </div>
+          </div>
+        </template>
+      </draggable>
+    </div>
+
+    <div class="task-column" data-status="Completada">
+      <h3>Completadas</h3>
+      <draggable v-model="taskss.done" group="tasks" @end="onDrop" item-key="id">
+        <template #item="{ element }">
+          <div class="task-item">
+            <h5 @click="toggleTaskDetails(element)" class="task-title">
+              {{ element.title }}
+              <span class="toggle-icon" v-if="element.isExpanded">🔽</span>
+              <span class="toggle-icon" v-else>▶️</span>
+            </h5>
+            <div v-if="element.isExpanded" class="task-details">
+              <p><strong>Descripción:</strong> {{ element.description }}</p>
+              <p><strong>Fecha de Vencimiento:</strong> {{ element.due_date }}</p>
+              <p><strong>Prioridad:</strong> {{ element.priority }}</p>
+             
+            </div>
+          </div>
+        </template>
+      </draggable>
+    </div>
+    <ModalComponent v-if="selectedTask" :show="true" @close="closeModal">
+      <h3>{{ selectedTask.title }}</h3>
+      <p><strong>Descripción:</strong> {{ selectedTask.description }}</p>
+      <p><strong>Fecha de Vencimiento:</strong> {{ selectedTask.due_date }}</p>
+      <p><strong>Prioridad:</strong> {{ selectedTask.priority }}</p>
+    </ModalComponent>
+  </div>
+</div>
+
 </template>
 
 <script setup>
@@ -62,6 +93,20 @@ import projectService from '@/services/projectService';
 //import { useRoute } from 'vue-router';
 import Swal from 'sweetalert2';
 //const route = useRoute(); // Obtiene información de la URL
+
+import ModalComponent from './ModalComponent.vue';
+
+const selectedTask = ref(null);
+
+// Abrir el modal con la tarea seleccionada
+const openModal = (task) => {
+  selectedTask.value = task;
+};
+
+// Cerrar el modal
+const closeModal = () => {
+  selectedTask.value = null;
+};
 
 const tasks = ref([]);
 const user = ref(AuthService.getCurrentUser());
@@ -83,7 +128,7 @@ const fetchTasks = () => {
         tasks.value = response.data;
         console.log(tasks.value)
         filterTasksByProject();
-      
+
       })
       .catch((error) => {
         Swal.fire('Error al cargar tareas:', error);
@@ -91,12 +136,13 @@ const fetchTasks = () => {
   }
 };
 
+const toggleTaskDetails=(task) => task.isExpanded = !task.isExpanded ;
 // Función para obtener proyectos desde el backend
 const fetchProjects = () => {
   projectService.getAllProjects()
     .then((response) => {
       projects.value = response.data;
-          filterTasksByProject();
+      filterTasksByProject();
     })
     .catch((error) => {
       Swal.fire('Error al cargar proyectos:', error);
@@ -120,9 +166,9 @@ const filterTasksByProject = () => {
       (task) => task.project === selectedProjectId.value
     );
 
-    taskss.value.todo = filteredTasks.filter((task) => task.status === 'Not Started');
-    taskss.value.inProgress = filteredTasks.filter((task) => task.status === 'In Progress');
-    taskss.value.done = filteredTasks.filter((task) => task.status === 'Completed');
+    taskss.value.todo = filteredTasks.filter((task) => task.status === 'Pendiente');
+    taskss.value.inProgress = filteredTasks.filter((task) => task.status === 'En Progreso');
+    taskss.value.done = filteredTasks.filter((task) => task.status === 'Completada');
   }
 };
 
@@ -139,7 +185,11 @@ const selectProject = (projectId) => {
 
 onMounted(() => {
   // Intentar recuperar el proyecto seleccionado de localStorage
-  const savedProjectId = localStorage.getItem('selectedProjectId');
+  const url = new URL(window.location);
+  url.searchParams.get('projectId'); // Elimina el parámetro 'projectId'
+
+ // alert( url.searchParams.get('projectId'))
+  const savedProjectId =  url.searchParams.get('projectId') ?  url.searchParams.get('projectId'):localStorage.getItem('selectedProjectId') ;
   selectedProjectId.value = savedProjectId ? Number(savedProjectId) : null;
 
   fetchProjects();
@@ -183,6 +233,11 @@ const onDrop = (evt) => {
   max-width: 1000px;
   margin: 0 auto;
   padding: 20px;
+}
+.toggle-icon{
+  cursor: pointer;
+  float: right;
+
 }
 
 /* Información del usuario */
@@ -249,25 +304,41 @@ const onDrop = (evt) => {
   text-align: center;
   margin-bottom: 20px;
 }
+.task-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+@media (max-width: 768px) {
+  .task-columns {
+    flex-direction: column;
+  }
+}
+
 
 .project-buttons label {
   font-weight: bold;
   margin-right: 10px;
   color: #333;
 }
+
 /* Estilo de columnas con colores específicos */
-.task-column[data-status="Not Started"] {
-  background-color: #ffebee; /* Rosa suave */
+.task-column[data-status="Pendiente"] {
+  background-color: #ffebee;
+  /* Rosa suave */
   border: 2px solid #f44336;
 }
 
-.task-column[data-status="In Progress"] {
-  background-color: #e3f2fd; /* Azul claro */
+.task-column[data-status="En Progreso"] {
+  background-color: #e3f2fd;
+  /* Azul claro */
   border: 2px solid #2196f3;
 }
 
-.task-column[data-status="Completed"] {
-  background-color: #e8f5e9; /* Verde pálido */
+.task-column[data-status="Completada"] {
+  background-color: #e8f5e9;
+  /* Verde pálido */
   border: 2px solid #4caf50;
 }
 

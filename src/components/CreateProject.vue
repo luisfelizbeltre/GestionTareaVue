@@ -1,13 +1,13 @@
 <template>
   <div class="container mt-5">
     <div class="row justify-content-center">
-      <div class="col-md-8">
+      <div class="col-md-20">
         <div class="card shadow-lg">
           <div class="card-header bg-primary text-white text-center">
-            <h2>Crear Proyecto</h2>
+            <h2>{{ props.project ? "Actualizar Proyecto" : "Crear Proyecto" }}</h2>
           </div>
           <div class="card-body">
-            <form @submit.prevent="createProject" class="needs-validation">
+            <form @submit.prevent="createOrUpdateProject" class="needs-validation">
               <div class="mb-3">
                 <label for="name" class="form-label">Nombre del Proyecto</label>
                 <input type="text" v-model="name" id="name" placeholder="Nombre del Proyecto" class="form-control" required />
@@ -37,7 +37,7 @@
               </div>
 
               <div class="text-center">
-                <button type="submit" class="btn btn-success w-100">Crear Proyecto</button>
+                <button type="submit" class="btn btn-success w-100"> {{ props.project ? "Actualizar Proyecto" : "Crear Proyecto" }} </button>
               </div>
             </form>
           </div>
@@ -48,47 +48,72 @@
 </template>
 
 <script setup>
-import { ref,onMounted } from 'vue';
+import { ref,onMounted ,defineProps} from 'vue';
 import projectService from '../services/projectService';
 import dayjs from 'dayjs';
 import Swal from 'sweetalert2';
 import userService from '@/services/userService';
+import { defineEmits } from 'vue';
+const emit = defineEmits(['inFocus', 'close'])
+const props = defineProps({
+  project:{
+    type:Object,
+    default:null,
+  },
+});// Asegúrate de que dayjs esté instalado.
 
-const name = ref('');
-const description = ref('');
-const responsibleUsername = ref('');
-const endDate = ref('');
-const endTime = ref('');
+const name = ref(props.project?.name || "");
+const description = ref(props.project?.description || "");
+const responsibleUsername = ref(props.project?.responsibleUsername || "");
+const endDate = ref(props.project?.endDate?.split("T")[0] || ""); // Si viene una fecha completa, extraemos solo la fecha.
+const endTime = ref(props.project?.endDate?.split("T")[1] || "");
 const endDateTime = ref('');
 
-const createProject = async () => {
-  // Combinar fecha y hora en un solo valor
-  if (endDate.value && endTime.value) {
-    endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format('YYYY-MM-DDTHH:mm:ss');
-    Swal.fire("Fecha y Hora",`Fecha y Hora combinadas: ${endDateTime.value}`,"success");
-  } else {
-    Swal.fire("Por favor selecciona una fecha y una hora.", "error");
-    return;
-  }
-
-  const project = {
-    name: name.value,
-    description: description.value,
-    responsibleUsername: responsibleUsername.value,
-    endDate: endDateTime.value,
-  };
-
+const createOrUpdateProject = async () => {
   try {
-    await projectService.createProject(project);
-    
-    Swal.fire("Proyecto creado exitosamente", "error");
-    location.reload(); // Recargar para actualizar la lista de proyectos
+    // Validar que se seleccionaron fecha y hora
+    if (endDate.value && endTime.value) {
+      endDateTime.value = dayjs(`${endDate.value}T${endTime.value}`).format(
+        "YYYY-MM-DDTHH:mm:ss"
+      );
+    } else {
+      await Swal.fire("Error", "Por favor selecciona una fecha y una hora.", "error");
+      return;
+    }
+
+    const projectData = {
+      name: name.value,
+      description: description.value,
+      responsibleUsername: responsibleUsername.value,
+      endDate: endDateTime.value,
+    };
+
+    let response;
+    if (props.project && props.project.id) {
+      // Si el proyecto tiene un `id`, es una edición
+      response = await projectService.updateProject(props.project.id, projectData);
+      if (response && response.data) {
+        await Swal.fire("Éxito", "El proyecto ha sido actualizado.", "success");
+        emit('close');
+      } else {
+        throw new Error("Respuesta no válida al actualizar el proyecto.");
+      }
+    } else {
+      // Si no hay datos en `props.project`,  es creación
+      response = await projectService.createProject(projectData);
+      if (response && response.data) {
+        await Swal.fire("Éxito", "El proyecto ha sido creado.", "success");
+        emit('close');
+      } else {
+        throw new Error("Respuesta no válida al crear el proyecto.");
+      }
+    }
   } catch (error) {
-    console.error('Error creando el proyecto:', error);
-  
-    Swal.fire("Error al crear proyectos.", "error");
+    console.error("Error al guardar el proyecto:", error);
+    await Swal.fire("Error", "No se pudo guardar el proyecto. Inténtalo nuevamente.", "error");
   }
 };
+
 
 const users = ref([]);
   

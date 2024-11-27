@@ -32,28 +32,26 @@
       </div>
     
 
-      <!-- Sección de agregar usuario -->
-      <div class="col-md-4"  v-if="isAdduserFormVisible" >
-        <div class="card shadow-sm">
-          <div class="card-header">
-            <button class="float-end" @click="toggleUserForm">X</button>
-            <h3>Agregar Usuario</h3>
-           
+      <div>
+    
 
-            
-          </div>
-          <div class="card-body">
-            
-            <RegisterTenant
-              title="Agregar Usuario"
-              username-label="Nombre de Usuario"
-              button-text="Agregar Usuario"
-              :show-role-select="true"
-              :show-tenant-name="false"
-            />
-          </div>
-        </div>
-      </div>
+    <!-- Modal -->
+    <ModalComponent v-if="isAdduserFormVisible" @close="toggleUserForm">
+      <!-- Header del modal -->
+      <template #header>
+        <h3>Agregar Usuario</h3>
+      </template>
+
+      <!-- Contenido del modal -->
+      <RegisterTenant
+        title="Agregar Usuario"
+        username-label="Nombre de Usuario"
+        button-text="Agregar Usuario"
+        :show-role-select="true"
+        :show-tenant-name="false"
+      />
+    </ModalComponent>
+  </div>
     </div>
     </div>
   
@@ -64,6 +62,7 @@ import { onMounted, ref,computed } from 'vue';
 import userService from '@/services/userService';
 import RegisterTenant from '@/components/RegisterTenant.vue';
 import Swal from 'sweetalert2';
+import ModalComponent from './ModalComponent.vue';
 
 const users = ref([]);
 const searchQuery= ref('')

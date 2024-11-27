@@ -4,7 +4,9 @@ class ProjectService {
   createProject(project) {
     return api.post('/projects/create', project);
   }
-
+updateProject(projectId,project){
+  return api.put(`/projects/update/${projectId}`, project);
+}
   addMemberToProject(projectId, username) {
     return api.post(`/projects/${projectId}/add-member?username=${username}`);
   }

@@ -4,47 +4,62 @@
     <div v-else-if="project" class="content">
       <!-- Sección de detalles del proyecto -->
       <div class="card shadow mb-4">
-          <div class="card-body">
-            <h1 class="card-title">Nombre: {{ project.name }}</h1>
-            <p class="card-text"><strong>Descripción:</strong> {{ project.description }}</p>
-            <p class="card-text"><strong>Responsable:</strong> {{ project.responsibleUsername }}</p>
-            <p class="card-text">
-         <strong> Fecha inicio:</strong> {{ formatDate(project.startDate) }} | <strong> Fecha fin:</strong> {{ formatDate(project.endDate) }}
-        </p>
-            <!-- Barra de progreso de tareas -->
-            <div class="progress mb-3">
-              <div
-                class="progress-bar progress-bar-striped progress-bar-animated"
-                role="progressbar"
-                :style="{ width: progressPercentage() + '%' }"
-                :aria-valuenow="progressPercentage()"
-                aria-valuemin="0"
-                aria-valuemax="100">
-              </div>
+        <div class="card-body">
+          <h1 class="card-title">Nombre: {{ project.name }}</h1>
+          <p class="card-text"><strong>Descripción:</strong> {{ project.description }}</p>
+          <p class="card-text"><strong>Responsable:</strong> {{ project.responsibleUsername }}</p>
+          <p class="card-text">
+            <strong> Fecha inicio:</strong> {{ formatDate(project.startDate) }} | <strong> Fecha fin:</strong> {{
+              formatDate(project.endDate) }}
+          </p>
+          <!-- Barra de progreso de tareas -->
+          <div class="progress mb-3">
+            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+              :style="{ width: progressPercentage() + '%' }" :aria-valuenow="progressPercentage()" aria-valuemin="0"
+              aria-valuemax="100">
             </div>
-            <p>{{ completedTasks() }} de {{ totalTasks() }} tareas completadas ({{ progressPercentage() }}%)</p>
           </div>
+          <p>{{ completedTasks() }} de {{ totalTasks() }} tareas completadas ({{ progressPercentage() }}%)</p>
         </div>
+      </div>
       <div class="padre">
         <!-- Tareas del proyecto -->
-        <div class="col-md-6 mb-4 tasks" >
-            <div class="filter-container">
-              <input type="text"  v-model="searchQuery" class="form-control" placeholder="Buscar tareas" >
-            </div>
-            <div class="card shadow " >
-              <div class="card-body " >
-                <h2 class="card-title text-center">Tareas</h2>
-                <ul class="list-group mb-3">
-                  <li v-for="task in filteredTask" :key="task.id" class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ task.title }} - <span :class="taskStatusClass(task.status)">{{ task.status }}</span></span>
-                    <button @click="confirmDeleteTask(task.id)" class="btn btn-danger btn-sm">🗑️</button>
-                  </li>
-                </ul>
-                <button @click="toggleTaskForm" class="btn btn-primary w-100">➕ Añadir Tarea</button>
-              </div>
-            </div>
-            
+        <div class="col-md-6 mb-4 tasks">
+          <div class="filter-container">
+            <input type="text" v-model="searchQuery" class="form-control" placeholder="Buscar tareas">
           </div>
+          <div class="card shadow">
+            <div class="card-body">
+              <h2 class="card-title text-center">Tareas</h2>
+              <ul class="list-group mb-3">
+                <li v-for="task in filteredTask" :key="task.id"
+                  class="list-group-item d-flex justify-content-between align-items-center">
+                  <div class="task-info" >
+                    <h5 @click="toggleTaskDetails(task)" :class="taskStatusClass(task.status)"  class="task-title">
+                      {{ task.title }}
+                      
+                      <span class="toggle-icon" v-if="task.isExpanded">🔽</span>
+                      <span class="toggle-icon" v-else>▶️</span>
+                    </h5>
+
+
+                    <div v-if="task.isExpanded" class="task-details">
+                      <p><strong>Descripción:</strong> {{ task.description }}</p>
+
+                      <p><strong>Fecha de Vencimiento:</strong> {{ formatDate( task.dueDate )}}</p>
+                      <p><strong>Prioridad:</strong> <span>{{ task.priority }}</span></p>
+                      <p><strong>Estado:</strong> <span :class="taskStatusClass(task.status)">{{ task.status }}</span>
+                      </p>
+                    </div>
+                  </div>
+                  <button @click="confirmDeleteTask(task.id)" class="btn btn-danger btn-sm">🗑️</button>
+                </li>
+              </ul>
+              <button @click="toggleTaskForm" class="btn btn-primary w-100">➕ Añadir Tarea</button>
+            </div>
+          </div>
+        </div>
+
 
         <div v-if="isTaskFormVisible" class="task-form">
           <button class="x" @click="toggleTaskForm">X</button>
@@ -55,7 +70,8 @@
         <div class="members">
           <h2>Miembros ({{ project.members.length }})</h2>
           <ul>
-            <li v-for="member in project.members" :key="member.id">{{ member.username  }}  <button @click="confirmDeleteMember(member.id)" >🗑️</button></li>
+            <li v-for="member in project.members" :key="member.id">{{ member.username }} <button
+                @click="confirmDeleteMember(member.id)">🗑️</button></li>
           </ul>
           <button @click="toggleMemberForm">➕ Añadir Miembro</button>
 
@@ -63,12 +79,13 @@
           <div v-if="isMemberFormVisible" class="add-member-form">
             <button class="btn-close float-end" @click="toggleMemberForm"></button>
             <h3>Añadir Miembro al Proyecto</h3>
-            
+
             <form @submit.prevent="addMember">
               <div class="form-group">
                 <label for="memberSelect">Seleccionar Usuario:</label>
-                <select v-model="newMember" id="memberSelect" >
-                  <option v-for="user in availableUsers" :key="user.id" :value="user.username">{{ user.username }}</option>
+                <select v-model="newMember" id="memberSelect">
+                  <option v-for="user in availableUsers" :key="user.id" :value="user.username">{{ user.username }}
+                  </option>
                 </select>
               </div>
               <div class="form-group">
@@ -112,21 +129,22 @@ const isMemberFormVisible = ref(false);
 const searchQuery = ref('');
 const newMember = ref(''); // Miembro seleccionado para agregar
 const toggleTaskForm = () => {
-    isMemberFormVisible.value =false
-    isTaskFormVisible.value = !isTaskFormVisible.value;
-  }
-  const toggleMemberForm = () => {
-    isTaskFormVisible.value = false
-  
-    isMemberFormVisible.value = !isMemberFormVisible.value;
-  };
+  isMemberFormVisible.value = false
+  isTaskFormVisible.value = !isTaskFormVisible.value;
+}
+const toggleMemberForm = () => {
+  isTaskFormVisible.value = false
+
+  isMemberFormVisible.value = !isMemberFormVisible.value;
+};
 // Cargar detalles del proyecto
 const loadProject = async () => {
   try {
     const response = await projectService.getProjectById(route.params.id);
-    project.value = response.data;
-    console.log(response.data);
+    project.value = response.data
     
+    console.log(project.value);
+
   } catch (error) {
     console.error("Error al cargar detalles del proyecto:", error);
     Swal.fire("Error", "Error al cargar detalles del proyecto", "error");
@@ -134,6 +152,9 @@ const loadProject = async () => {
     isLoading.value = false;
   }
 };
+const toggleTaskDetails = (task) => 
+  task.isExpanded = !task.isExpanded;
+
 
 // Cargar lista de usuarios
 const fetchUsers = async () => {
@@ -149,10 +170,27 @@ const fetchUsers = async () => {
 // Filtrar tareas según la búsqueda
 const filteredTask = computed(() => {
   const searchText = searchQuery.value.trim().toLowerCase();
-  return project.value.tasks.filter(task =>
-    task.title ? task.title.toLowerCase().includes(searchText) : false
-  );
+
+  const statusOrder = {
+    'Pendiente': 1,
+    'En progreso': 2,
+    'Completada': 3,
+  };
+
+  return project.value.tasks
+    .filter(task => task.title ? task.title.toLowerCase().includes(searchText) : false)
+    .sort((taskA, taskB) => {
+      // Primero ordenar por estado (usando el valor definido en `statusOrder`)
+      const statusComparison = (statusOrder[taskA.status] || 0) - (statusOrder[taskB.status] || 0);
+      console.log(statusComparison)
+      if (statusComparison === 0) {
+        return taskA.title.localeCompare(taskB.title);
+      }
+
+      return statusComparison;
+    });
 });
+
 
 // Usuarios disponibles para añadir al proyecto
 const availableUsers = computed(() => {
@@ -163,7 +201,7 @@ const availableUsers = computed(() => {
 
 // Calcular tareas completadas y porcentaje de progreso
 function completedTasks() {
-  return project.value.tasks.filter(task => task.status === "Completed").length;
+  return project.value.tasks.filter(task => task.status === "Completada").length;
 }
 function totalTasks() {
   return project.value.tasks.length;
@@ -252,16 +290,16 @@ const goBack = () => {
 
 // Asignar clases de estado para las tareas
 const taskStatusClass = (status) => ({
-  'status-completed': status === 'Completed',
+  'status-completed': status === 'Completada',
   'status-pending': status === 'Pendiente',
-  'status-nostarted': status === 'Not Started',
+  'status-progress': status === 'En Progreso',
 });
 
 const formatDate = (date) => {
 
 
 
-return date ? dayjs(date).format('DD/MM/YYYY HH:mm') : "Fecha no disponible";
+  return date ? dayjs(date).format('DD/MM/YYYY HH:mm') : "Fecha no disponible";
 };
 
 // Cargar proyecto y lista de usuarios al montar el componente
@@ -273,9 +311,10 @@ onMounted(() => {
 
 
 <style scoped>
-.filter-container{
+.filter-container {
   margin-bottom: 10px;
 }
+
 /* Estilos principales */
 .padre {
   display: flex;
@@ -302,12 +341,50 @@ onMounted(() => {
   top: 0;
   font-size: medium;
 }
+.task-info {
+  display: flex;
+  flex-direction: column; /* Para mantener la dirección vertical */
+  width: 100%;
+}
+
+.task-title {
+  background-color: #f8f9fa;
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  width: 100%; /* Asegura que ocupe todo el ancho disponible */
+  margin: 10px 0; /* Márgenes verticales */
+  box-sizing: border-box;
+  display: flex;
+  justify-content: space-between; /* Espacio entre el texto y el icono */
+  align-items: center; /* Alinea verticalmente los elementos */
+}
+
+
+.task-title:hover {
+  background-color: #e9ecef;
+  transform: scale(1.02);
+}
+
+.toggle-icon {
+  font-size: 18px;
+  color: #6c757d;
+
+  /* Color del ícono */
+}
+
+.task-title:hover .toggle-icon {
+  color: #495057;
+  /* Cambio de color del ícono al pasar el cursor */
+}
 
 .project {
 
   color: #221616;
   padding-top: 0;
-  
+
 }
 
 .members,
@@ -365,11 +442,11 @@ button:hover {
   color: green;
 }
 
-.status-nostarted {
+.status-pending {
   color: red;
 }
 
-.status-in-progress {
+.status-progress {
   color: blue;
 }
 
@@ -415,7 +492,7 @@ h2 {
 
 .progress-bar {
   height: 100%;
-  background-color:#185cdb;
+  background-color: #185cdb;
   transition: width 0.3s ease;
 }
 
@@ -502,4 +579,4 @@ h2 {
     /* Reduce el padding interno */
   }
 }
-</style> 
+</style>

@@ -7,73 +7,89 @@
       </div>
 
       <div v-for="project in filteredProjects" :key="project.id" class="card mb-3 p-3 shadow-sm">
-        <div class="card-body">
-          <h4 class="card-title">{{ project.name }}</h4>
+        
+        <div class="card-body ">
+          <h4 class="card-title">{{ project.name }} <button  v-if="isAdmin" @click="openEditModal(project)"
+            class="btn float-end btn-link btn-sm text-decoration-none" title="Editar Proyecto">
+            ✏️
+          </button></h4>
+
+          
           <p class="card-text">
-            Fecha inicio: {{ formatDate(project.startDate) }} | Fecha fin: {{ formatDate(project.endDate) }}
+            Fecha inicio: {{ formatDate(project.startDate) }} | Fecha fin: {{ formatDate(project.endDate)  }}
           </p>
           <p class="card-text">Responsable: {{ project.responsibleUsername }}</p>
           <p class="card-text">Tareas ({{ project.tasks.length }})</p>
           <button @click="viewProject(project.id)" class="btn btn-outline-primary btn-sm">
             👁️ Ver detalle
           </button>
-          <button v-if="isAdmin || isSuper"  @click="confirmDeleteProject(project.id)" class="btn btn-outline-danger btn-sm float-end">
+          <button v-if="isAdmin || isSuper" @click="confirmDeleteProject(project.id)"
+            class="btn btn-outline-danger btn-sm float-end">
             🗑️ Eliminar Proyecto
           </button>
         </div>
+        
         <div class="progress mb-3">
-          <div
-            class="progress-bar progress-bar-striped progress-bar-animated"
-            role="progressbar"
-            :style="{ width: progressPercentage(project) + '%' }"
-            :aria-valuenow="progressPercentage(project)"
-            aria-valuemin="0"
-            aria-valuemax="100">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
+            :style="{ width: progressPercentage(project) + '%' }" :aria-valuenow="progressPercentage(project)"
+            aria-valuemin="0" aria-valuemax="100">
           </div>
         </div>
-        <p>{{ completedTasks(project) }} de {{ project.tasks.length }} tareas completadas ({{ progressPercentage(project) }}%)</p>
+        <p>{{ completedTasks(project) }} de {{ project.tasks.length }} tareas completadas ({{
+          progressPercentage(project) }}%) </p>
+
+
       </div>
-     
-      
+
+
 
       <div v-if="isAdmin" class="text-center mt-4">
         <button @click="toggleCreateProjectForm" class="btn btn-primary">
           ➕ Crear nuevo proyecto
         </button>
       </div>
-    </div>
 
-    <div class="create-project-container card mt-3 shadow" v-if="showCreateProjectForm">
-      <div class="card-body">
-        <button class="btn-close float-end" @click="toggleCreateProjectForm"></button>
-        <CreateProject />
+    </div>
+    <ModalComponent v-if="showModal" @close="closeModal3">
+      <CreateProject :project="selectedProject" @project-updated="onProjectUpdated" />
+    </ModalComponent>
+    <ModalComponent v-if="showCreateProjectForm" @close="toggleCreateProjectForm">
+      <CreateProject />
+    </ModalComponent>
+    <div class="main-container">
+      <div class="completed-tasks">
+        <h3>Últimas tareas completadas</h3>
+        <ul>
+          <li v-for="task in completedTaskss" @click="openModal2(task)" :key="task.index">
+            <p> {{ task.title }} </p>
+
+          </li>
+        </ul>
+      </div>
+
+      <ModalComponent2 v-if="selectedTask2" :show="true" @close="closeModal2">
+
+        <h3>{{ selectedTask2.title }}</h3>
+        <p><strong>Descripción:</strong> {{ selectedTask2.description }}</p>
+        <p><strong>Fecha de Vencimiento:</strong> {{ selectedTask2.due_date }}</p>
+        <p><strong>Prioridad:</strong> {{ selectedTask2.priority }}</p>
+
+      </ModalComponent2>
+
+      <div class="grafic">
+        <h3>Progreso de Proyectos</h3>
+        <div class="chart-container">
+          <canvas id="progressChart"></canvas>
+        </div>
       </div>
     </div>
 
-    <div class="main-container">
-  <div class="completed-tasks">
-    <h3>Últimas tareas completadas</h3>
-    <ul>
-      <li v-for="task in completedTaskss" :key="task.index">
-        {{ task.title }} 
-      </li>
-    </ul>
+
+
+
+
   </div>
 
-  <div class="grafic">
-    <h3>Progreso de Proyectos</h3>
-    <div class="chart-container">
-      <canvas id="progressChart"></canvas>
-    </div>
-  </div>
-</div>
-
-    
-  
-   
-    
-  </div>
-  
 </template>
 
 
@@ -87,6 +103,34 @@ import Chart from 'chart.js/auto';
 import authService from '@/services/auth.service';
 import CreateProject from '@/components/CreateProject.vue';
 import { useAuth } from '@/store/useAuth';
+
+import ModalComponent from './ModalComponent.vue';
+import ModalComponent2 from './ModalComponent.vue';
+const selectedTask2 = ref(null)
+const selectedProject= ref(null)
+const  showModal=ref(false)
+const openModal2 = (task) => {
+  selectedTask2.value = task;
+};
+
+// Cerrar el modal
+const closeModal2 = () => {
+  selectedTask2.value = null;
+};
+const closeModal3=()=>{
+  showModal.value=false
+  loadProjects()
+
+}
+
+
+const openEditModal=(project)=>{
+  selectedProject.value = project;
+  showModal.value=true
+  
+
+}
+
 
 const projects = ref([]);
 const isAdmin = useAuth().isAdmin;
@@ -105,14 +149,14 @@ const filteredProjects = computed(() => {
 
 const completedTaskss = computed(() => {
   return projects.value.flatMap(project => {
-    return project.tasks.filter(task => task.status === "Completed");
+    return project.tasks.filter(task => task.status === "Completada");
   }).slice(-5);
 });
 
 
 
 function completedTasks(project) {
-  return project?.tasks?.filter(task => task.status === "Completed").length || 0;
+  return project?.tasks?.filter(task => task.status === "Completada").length || 0;
 }
 
 
@@ -129,10 +173,12 @@ const loadProjects = async () => {
       location.reload();
       sessionStorage.removeItem("auth");
     }
+    console.log(projects.value)
+
   } catch (error) {
     Swal.fire("Error al cargar proyectos.", "", "error");
   }
- 
+
 };
 
 const viewProject = (projectId) => {
@@ -145,6 +191,8 @@ const formatDate = (date) => {
 
 const toggleCreateProjectForm = () => {
   showCreateProjectForm.value = !showCreateProjectForm.value;
+  loadProjects()
+
 };
 
 const confirmDeleteProject = (projectId) => {
@@ -168,7 +216,8 @@ const deleteProject = async (projectId) => {
   try {
     await projectService.deleteProject(projectId);
     Swal.fire("¡Eliminado!", "El proyecto ha sido eliminado correctamente.", "success");
-   
+    loadProjects()
+
   } catch (error) {
     Swal.fire("Error", "Hubo un problema al eliminar el proyecto.", "error");
   }
@@ -224,7 +273,7 @@ const drawChart = () => {
 watch(projects, () => {
   if (projects.value.length > 0) {
     drawChart();
-    
+
   }
 }, { immediate: true });
 
@@ -234,16 +283,21 @@ onMounted(loadProjects);
 
 <style scoped>
 /* Contenedor de las tareas completadas */
-.filter-container{
+.filter-container {
   margin-bottom: 10px;
 }
+
 .main-container {
-  max-width: 1200px; 
-  margin: 0 auto; 
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 0 15px;
-  display: flex; 
+  display: flex;
   flex-wrap: wrap;
-  gap: 20px; 
+  gap: 20px;
+}
+
+.completed-tasks {
+  cursor: pointer;
 }
 
 .completed-tasks,
@@ -252,21 +306,26 @@ onMounted(loadProjects);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  flex: 1; 
-  min-width: 300px; 
+  flex: 1;
+  min-width: 300px;
 }
+
+
 
 .chart-container {
   width: 100%;
-  max-width: 100%; 
-  overflow-x: hidden; 
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 canvas {
   display: block;
-  max-width: 100%; /* Hace el canvas responsivo */
-  height: auto; /* Mantiene proporciones */
+  max-width: 100%;
+  /* Hace el canvas responsivo */
+  height: auto;
+  /* Mantiene proporciones */
 }
+
 .completed-tasks h3 {
   font-size: 24px;
   color: #333;
@@ -279,13 +338,13 @@ canvas {
 }
 
 .completed-tasks li {
- 
+
   border: 1px solid #00796b;
   margin-bottom: 8px;
   padding: 10px;
   border-radius: 5px;
-  
- 
+
+
 }
 
 .completed-tasks li:last-child {
@@ -314,14 +373,14 @@ canvas {
   width: 100%;
   max-width: 600px;
   margin: 0 auto;
-  
+
 }
 
 .dashboard-container {
   display: flex;
   gap: 20px;
   justify-content: space-between;
-  
+
 }
 
 .progress-container {
@@ -348,22 +407,29 @@ canvas {
   padding: 20px;
   width: 80%;
   margin-top: 100px;
-min-width: 500px;
+  min-width: 500px;
 }
-
+.top-0 {
+  top: 0;
+}
+.end-0 {
+  right: 0;
+}
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
     align-items: center;
   }
 
-  .projects-list, .create-project-container {
+  .projects-list,
+  .create-project-container {
     width: 100%;
   }
 
   .projects-list {
     max-height: 600px;
   }
+
   .create-project-container {
     margin-top: 20px;
   }
