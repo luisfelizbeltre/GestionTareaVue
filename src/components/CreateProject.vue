@@ -10,21 +10,23 @@
             <form @submit.prevent="createOrUpdateProject" class="needs-validation">
               <div class="mb-3">
                 <label for="name" class="form-label">Nombre del Proyecto</label>
-                <input type="text" v-model="name" id="name" placeholder="Nombre del Proyecto" class="form-control" required />
+                <input type="text" v-model="name" id="name" placeholder="Nombre del Proyecto" class="form-control"
+                  required />
               </div>
 
               <div class="mb-3">
                 <label for="description" class="form-label">Descripción</label>
-                <input type="text" v-model="description" id="description" placeholder="Descripción" class="form-control" required />
+                <input type="text" v-model="description" id="description" placeholder="Descripción" class="form-control"
+                  required />
               </div>
 
-            
-              <div class="form-group mb-3" >
+
+              <div class="form-group mb-3">
                 <label for="responsibleUsername" class="form-label">Responsable</label>
-            <select v-model="responsibleUsername" id="assignedTo" required>
-              <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
-            </select>
-          </div>
+                <select v-model="responsibleUsername" id="assignedTo" required>
+                  <option v-for="user in users" :key="user.id" :value="user.username">{{ user.username }}</option>
+                </select>
+              </div>
 
               <div class="mb-3">
                 <label for="endDate" class="form-label">Fecha de Fin</label>
@@ -37,7 +39,7 @@
               </div>
 
               <div class="text-center">
-                <button type="submit" class="btn btn-success w-100"> {{ props.project ? "Actualizar Proyecto" : "Crear Proyecto" }} </button>
+                <button type="submit" class="btn btn-success w-100"> {{ props.project ? "Actualizar Proyecto" : "CrearProyecto" }} </button>
               </div>
             </form>
           </div>
@@ -48,7 +50,7 @@
 </template>
 
 <script setup>
-import { ref,onMounted ,defineProps} from 'vue';
+import { ref, onMounted, defineProps } from 'vue';
 import projectService from '../services/projectService';
 import dayjs from 'dayjs';
 import Swal from 'sweetalert2';
@@ -56,11 +58,11 @@ import userService from '@/services/userService';
 import { defineEmits } from 'vue';
 const emit = defineEmits(['inFocus', 'close'])
 const props = defineProps({
-  project:{
-    type:Object,
-    default:null,
+  project: {
+    type: Object,
+    default: null,
   },
-});// Asegúrate de que dayjs esté instalado.
+});
 
 const name = ref(props.project?.name || "");
 const description = ref(props.project?.description || "");
@@ -116,38 +118,40 @@ const createOrUpdateProject = async () => {
 
 
 const users = ref([]);
-  
-  const fetchUsers = async () => {
-    try {
-      const response = await userService.getAllUsers();
-      console.log(response.data)
-      users.value = response.data.filter(user =>{
-       return user.roles && !user.roles.includes("ROLE_USER")
-      })
-    } catch (error) {
-      console.error("There was an error fetching the users:", error);
-    }
-  };
-  
-  onMounted(fetchUsers)
+
+const fetchUsers = async () => {
+  try {
+    const response = await userService.getAllUsers();
+    console.log(response.data)
+    users.value = response.data.filter(user => {
+      return user.roles && !user.roles.includes("ROLE_USER")
+    })
+  } catch (error) {
+    console.error("There was an error fetching the users:", error);
+  }
+};
+
+onMounted(fetchUsers)
 </script>
 
 <style scoped>
 .card {
   border-radius: 8px;
 }
+
 .card-header {
   font-size: 24px;
   font-weight: 500;
 }
 
-select{
+select {
   width: 100%;
-  
+
 }
+
 label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: bold;
-  }
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
 </style>

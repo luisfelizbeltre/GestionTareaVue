@@ -7,17 +7,18 @@
       </div>
 
       <div v-for="project in filteredProjects" :key="project.id" class="card mb-3 p-3 shadow-sm">
-        
-        <div class="card-body ">
-          <h4 class="card-title">{{ project.name }} <button  v-if="isAdmin" @click="openEditModal(project)"
-            class="btn float-end btn-link btn-sm text-decoration-none" title="Editar Proyecto">
-            ✏️
-          </button></h4>
 
-          
+        <div class="card-body ">
+          <h4 class="card-title">{{ project.name }} <button v-if="isAdmin" @click="openEditModal(project)"
+              class="btn float-end btn-link btn-sm text-decoration-none" title="Editar Proyecto">
+              ✏️
+            </button></h4>
+
+
           <p class="card-text">
-            Fecha inicio: {{ formatDate(project.startDate) }} | Fecha fin: {{ formatDate(project.endDate)  }}
+            Fecha inicio: {{ formatDate(project.startDate) }} | Fecha fin: {{ formatDate(project.endDate) }}
           </p>
+
           <p class="card-text">Responsable: {{ project.responsibleUsername }}</p>
           <p class="card-text">Tareas ({{ project.tasks.length }})</p>
           <button @click="viewProject(project.id)" class="btn btn-outline-primary btn-sm">
@@ -28,7 +29,7 @@
             🗑️ Eliminar Proyecto
           </button>
         </div>
-        
+
         <div class="progress mb-3">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar"
             :style="{ width: progressPercentage(project) + '%' }" :aria-valuenow="progressPercentage(project)"
@@ -50,12 +51,15 @@
       </div>
 
     </div>
+
     <ModalComponent v-if="showModal" @close="closeModal3">
       <CreateProject :project="selectedProject" @project-updated="onProjectUpdated" />
     </ModalComponent>
+
     <ModalComponent v-if="showCreateProjectForm" @close="toggleCreateProjectForm">
       <CreateProject />
     </ModalComponent>
+
     <div class="main-container">
       <div class="completed-tasks">
         <h3>Últimas tareas completadas</h3>
@@ -107,8 +111,8 @@ import { useAuth } from '@/store/useAuth';
 import ModalComponent from './ModalComponent.vue';
 import ModalComponent2 from './ModalComponent.vue';
 const selectedTask2 = ref(null)
-const selectedProject= ref(null)
-const  showModal=ref(false)
+const selectedProject = ref(null)
+const showModal = ref(false)
 const openModal2 = (task) => {
   selectedTask2.value = task;
 };
@@ -117,17 +121,17 @@ const openModal2 = (task) => {
 const closeModal2 = () => {
   selectedTask2.value = null;
 };
-const closeModal3=()=>{
-  showModal.value=false
+const closeModal3 = () => {
+  showModal.value = false
   loadProjects()
 
 }
 
 
-const openEditModal=(project)=>{
+const openEditModal = (project) => {
   selectedProject.value = project;
-  showModal.value=true
-  
+  showModal.value = true
+
 
 }
 
@@ -409,12 +413,15 @@ canvas {
   margin-top: 100px;
   min-width: 500px;
 }
+
 .top-0 {
   top: 0;
 }
+
 .end-0 {
   right: 0;
 }
+
 @media (max-width: 768px) {
   .dashboard-container {
     flex-direction: column;
